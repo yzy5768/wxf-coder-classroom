@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" xmlns:vistech="com.vistech.*" initialize="init()">
+<mx:Script>
+	<![CDATA[
+		import mx.controls.Alert;
+	function init():void{
+		test.setAppURL("http://localhost:8003/app.php");
+		test.readFormValue("2017");
+	}		
+	
+	function save():void{
+		test.saveFormValue();
+	}
+	]]>
+</mx:Script>
+	<vistech:VT_PROJECTS_RES_from width="100%" height="90%" id="test" />
+	<mx:Button click="save()" left="10" bottom="10" />
+</mx:Application>

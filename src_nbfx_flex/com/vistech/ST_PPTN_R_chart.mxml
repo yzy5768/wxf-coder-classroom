@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FlowContainer xmlns="flexlib.containers.*" xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" initialize="config()">
+	<mx:Script>
+        <![CDATA[
+        	import mx.preloaders.Preloader;
+        	import mx.charts.series.LineSeries;
+        	import mx.charts.LineChart;
+        	import mx.controls.Alert;
+        	import mx.rpc.events.FaultEvent;
+        	import mx.rpc.events.ResultEvent;
+        	import mx.rpc.http.mxml.HTTPService;
+        	
+        	import mx.collections.ArrayCollection;
+        	
+        	//默认的后台文件路径,可以通过 app.php?controller=c1&action=a2调用不同数据
+			private var appURL:String = "app.php";		
+			
+	        /**
+			 * 读取配置文件,此函数在控件初始化后运行
+			 * 为 combox 的下拉框填充数据
+			 * 需要向后台读取 config.xml 
+			 * */
+			private function config():void{
+				var httpservice:HTTPService = new HTTPService();
+			    httpservice.url = "st_stbprp_search.xml";
+			    httpservice.method = "GET";
+				httpservice.addEventListener(ResultEvent.RESULT, function(event:ResultEvent){
+					appURL = event.result.vistech.appURL;
+					readChartData();
+				});
+				httpservice.addEventListener(FaultEvent.FAULT, function(event:FaultEvent):void{
+					Alert.show("无法读取配置文件 st_stbprp_search.xml , 请将 st_stbprp_search.xml 放到 地图 文件的同目录下,或者 st_stbprp_search.xml 文件格式错误");
+				});			
+				httpservice.send();
+			}
+			
+			public function readChartData(){
+				var httpservice:HTTPService = new HTTPService();
+			    httpservice.url = appURL+"?controller=st_pptn_r&action=chart";
+			    
+			    httpservice.method = "POST";
+				httpservice.addEventListener(ResultEvent.RESULT, function(event:ResultEvent){
+					setChartData(event.result.st_pptn_r);
+					
+				});
+				httpservice.addEventListener(FaultEvent.FAULT, function(event:FaultEvent):void{
+					Alert.show("无法读取配置文件 st_stbprp_search.xml , 请将 st_stbprp_search.xml 放到 地图 文件的同目录下,或者 st_stbprp_search.xml 文件格式错误");
+				});			
+				httpservice.send();
+			}
+
+			public function setChartData(data:Object):void{
+				var chart:LineChart = (getChildByName("st_pptn_r_chart") as LineChart);
+				var lines:Array = ( data.stcds.stcd as ArrayCollection).toArray();
+				chart.dataProvider = data.item as ArrayCollection;
+				
+				var myLines:Array = new Array();
+				for(var i:int=0;i<lines.length;i++){
+					var line:LineSeries = new LineSeries();
+					line.yField = "DRP_"+lines[i].toString();
+					line.xField = "TM";
+					line.displayName = "gggg"+i.toString();
+					myLines.push(line);
+				}
+				
+				(getChildByName("st_pptn_r_chart") as LineChart).series = myLines;
+			}
+			]]>
+    </mx:Script>
+    
+ 
+         
+     <mx:LineChart height="100%" name="st_pptn_r_chart" width="100%"
+        showDataTips="true">            
+        <mx:horizontalAxis>
+            <mx:CategoryAxis categoryField="TM"/>
+        </mx:horizontalAxis>
+        <mx:series>
+        	<mx:LineSeries yField="DRP_" />
+        </mx:series>
+    </mx:LineChart>
+</FlowContainer>

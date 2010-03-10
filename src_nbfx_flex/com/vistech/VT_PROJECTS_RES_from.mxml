@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FlowContainer xmlns="flexlib.containers.*"
+               xmlns:mx="http://www.adobe.com/2006/mxml"
+               width="100%"
+               height="100%">
+    <mx:Script>
+        <![CDATA[
+            import mx.events.CloseEvent;
+            import com.vistech.SuperPanel;
+            import mx.core.Application;
+            import mx.controls.DateField;
+            import mx.messaging.AbstractConsumer;
+            import mx.controls.ComboBox;
+            import mx.controls.ComboBase;
+            import mx.collections.ArrayCollection;
+            import mx.rpc.events.FaultEvent;
+            import mx.controls.Alert;
+            import mx.controls.TextInput;
+            import mx.containers.FormItem;
+            import mx.containers.Form;
+            import mx.rpc.AsyncToken;
+            import mx.rpc.events.ResultEvent;
+            import mx.rpc.http.HTTPService;
+
+            //默认的后台文件路径,可以通过 app.php?controller=c1&action=a2调用不同数据
+            private var appURL:String="app.php";
+
+            /**
+             * 向表单传递一个哈希表,给表单赋值并显示,并返回一个哈希表
+             *
+             * 如果在赋值过程中的任何一个元素出了错误,则取消赋值,并返回错误的键值
+             * 如果提供的键对比 ST_STBPRP_B 的属性多,可以标注,并返回多余的键值
+             * 在返回值中,有一对键值能够表示这次赋值的成果与否: isSuccess:Boolen
+             * @param data 一个哈希表,键值严格参照 ST_STBPRP_B 的数据库结构
+             * @return result 一个哈希表
+             * */
+            public function setFormValue(data:Dictionary):Dictionary
+            {
+				for (var key:String in data) {
+					if(data[key]==""||data[key]==null)continue;
+					(getChildByName(key) as TextInput).text = data[key];
+
+	 				delete data[key];
+				}
+				return data; 
+            }
+
+            /**
+             * 获得这个表单的值
+             *
+             * 会先判断表单中每个元素的合法性,如果全部合法,则只返回 {isSuccess:true}
+             * 如果有不合法的数据输入,则返回不合法的元素键值
+             * @return result 一个哈希表
+             * */
+            public function getFormValue():Dictionary
+            {            	
+                var result:Dictionary=new Dictionary();
+                for (var i:int=1; i < getChildren().length; i+=2)
+                {
+					result[(getChildAt(i) as TextInput).name]=(getChildAt(i) as TextInput).text;
+                }
+                result['isSuccess']=true;
+                return result; //TODO 还没有实现 键值判断 		
+            }
+
+            /**
+             * 保存表单数据,可以是 新建 和 修改 操作
+             *
+             * 根据getFormValue得到的值保存
+             * 向后台通信,通信过程中,让控件左下角的 状态 只表示为 保存中
+             * 如果通信失败:网络问题,则弹出错误框
+             * 如果通信成果,则直接返回后台返回的数据
+             * */
+            public function saveFormValue():void
+            {
+                var data:Dictionary=this.getFormValue();
+                delete data['isSuccess'];
+                
+                var httpservice:HTTPService=new HTTPService();
+                httpservice.url=appURL + "?controller=vt_projects_res&action=save";
+                httpservice.addEventListener(ResultEvent.RESULT, function(event:ResultEvent):void
+                    {
+                    //TODO 直接输出后台返回值
+                    });
+                httpservice.addEventListener(FaultEvent.FAULT, function(event:FaultEvent):void
+                    {
+                        Alert.show("无法连接到服务器");
+                    });
+                httpservice.request=data as Object;
+                httpservice.method="POST";
+                httpservice.send();
+            }
+
+            /**
+             * 从后台读取数据并显示到表单
+             *
+             * 规定: action=read 只返回一条记录
+             * */
+            public function readFormValue(stcd:String):void
+            {
+                var data:Dictionary=new Dictionary();
+                var httpservice:HTTPService=new HTTPService();
+                httpservice.url=appURL + "?controller=vt_projects_res&action=read";
+                httpservice.addEventListener(ResultEvent.RESULT, function(event:ResultEvent):void
+                    {
+                        if (event.result.vt_projects_res)
+                        {
+                            for (var key:String in(event.result.vt_projects_res.valueOf()))
+                            {
+                                data[key]=event.result.vt_projects_res[key];
+                            }
+                            setFormValue(data);
+                        }
+                        else
+                        {
+                            Alert.show("没有数据返回");
+                        }
+                    });
+                httpservice.addEventListener(FaultEvent.FAULT, function(event:FaultEvent):void
+                    {
+                        Alert.show("无法连接到服务器");
+                    });
+                httpservice.request={stcd: stcd};
+                httpservice.method="POST";
+                httpservice.send();
+            }
+            
+            /**
+             * 设置 appURL 的路径,通过 appURL ,实现与后台通信.这样,即便主文件(swf文件)与后台文件不在一个目录下,只要通过配置文件config.xml
+             * 程序仍然可以运行
+             * 比如用户将 swf 文件下载到了本地文件夹,仍然可以实现访问
+             * config.xml 的数据,一般在 application 初始化时向后台一次性读到用户浏览器的内存中
+             * */
+            public function setAppURL(path:String):void{
+            	this.appURL = path;
+            }
+        ]]>
+    </mx:Script>
+<mx:Label width="100"
+              text="水库名称"/>
+    <mx:TextInput width="150"
+                  name="name"/>
+    <mx:Label width="100"
+              text="编号"/>
+    <mx:TextInput width="150"
+                  name="id"/>
+    <mx:Label width="100"
+              text="水库负责人"/>
+    <mx:TextInput width="150"
+                  name="id_people_incharge"/>
+    <mx:Label width="100"
+              text="所在河流"/>
+    <mx:TextInput width="150"
+                  name="id_river"/>
+    <mx:Label width="100"
+              text="管理单位"/>
+    <mx:TextInput width="150"
+                  name="department_manager"/>
+    <mx:Label width="100"
+              text="所在地点"/>
+    <mx:TextInput width="150"
+                  name="address"/>
+    <mx:Label width="100"
+              text="邮政编码"/>
+    <mx:TextInput width="150"
+                  name="postcode"/>
+    <mx:Label width="100"
+              text="主管部门"/>
+    <mx:TextInput width="150"
+                  name="depart_incharge"/>
+    <mx:Label width="100"
+              text="集水面积"/>
+    <mx:TextInput width="150"
+                  name="water_area"/>
+    <mx:Label width="100"
+              text="总库容"/>
+    <mx:TextInput width="150"
+                  name="capacity_total"/>
+    <mx:Label width="100"
+              text="兴利库容"/>
+    <mx:TextInput width="150"
+                  name="capacity_good"/>
+    <mx:Label width="100"
+              text="调洪库容"/>
+    <mx:TextInput width="150"
+                  name="capacity_exchange"/>
+    <mx:Label width="100"
+              text="总投资"/>
+    <mx:TextInput width="150"
+                  name="Investment"/>
+    <mx:Label width="100"
+              text="竣工日期"/>
+    <mx:TextInput width="150"
+                  name="date_completed"/>
+    <mx:Label width="100"
+              text="灌溉面积"/>
+    <mx:TextInput width="150"
+                  name="irrigation"/>
+    <mx:Label width="100"
+              text="乡镇供水"/>
+    <mx:TextInput width="150"
+                  name="watersupport"/>
+    <mx:Label width="100"
+              text="铁路"/>
+    <mx:TextInput width="150"
+                  name="railway"/>
+    <mx:Label width="100"
+              text="公路"/>
+    <mx:TextInput width="150"
+                  name="road"/>
+    <mx:Label width="100"
+              text="村庄"/>
+    <mx:TextInput width="150"
+                  name="village"/>
+    <mx:Label width="100"
+              text="人口"/>
+    <mx:TextInput width="150"
+                  name="population"/>
+    <mx:Label width="100"
+              text="耕地"/>
+    <mx:TextInput width="150"
+                  name="farmland"/>
+    <mx:Label width="100"
+              text="抢险转移路线"/>
+    <mx:TextInput width="150"
+                  name="way_runaway"/>
+
+</FlowContainer>

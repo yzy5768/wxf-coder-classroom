@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>桥梁</name>
+	<open>1</open>
+	<StyleMap id="msn_ylw-pushpin10">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#sn_ylw-pushpin16</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#sh_ylw-pushpin14</styleUrl>
+		</Pair>
+	</StyleMap>
+	<StyleMap id="msn_ylw-pushpin101">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#sn_ylw-pushpin14</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#sh_ylw-pushpin14</styleUrl>
+		</Pair>
+	</StyleMap>	
+	<Style id="sh_ylw-pushpin14">
+		<IconStyle>
+			<scale>1.3</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<LineStyle>
+			<color>ff00ffff</color>
+		</LineStyle>
+	</Style>
+	<Style id="sh_ylw-pushpin16">
+		<IconStyle>
+			<scale>1.3</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<LineStyle>
+			<color>ff00ffff</color>
+		</LineStyle>
+	</Style>	
+	<Placemark>
+		<name>浦庙大桥</name>
+		<styleUrl>#msn_ylw-pushpin10</styleUrl>
+		<LineString>
+			<tessellate>1</tessellate>
+			<coordinates>
+108.4870892692187,22.76417674629369,0 108.4833926885685,22.76410273640074,0 </coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark>
+		<name>仙葫大桥</name>
+		<styleUrl>#msn_ylw-pushpin</styleUrl>
+		<LineString>
+			<extrude>1</extrude>
+			<tessellate>1</tessellate>
+			<altitudeMode>relativeToGround</altitudeMode>
+			<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			<coordinates>
+108.4534736136506,22.79546219085967,0 108.4573748640662,22.79112999831487,0 </coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark>
+		<name>三岸大桥</name>
+		<styleUrl>#msn_ylw-pushpin10</styleUrl>
+		<LineString>
+			<extrude>1</extrude>
+			<tessellate>1</tessellate>
+			<altitudeMode>relativeToGround</altitudeMode>
+			<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			<coordinates>
+108.431450809751,22.79150076886063,0 108.4313396392864,22.78617341932344,0 </coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark>
+		<name>葫芦鼎大桥</name>
+		<styleUrl>#msn_ylw-pushpin10</styleUrl>
+		<LineString>
+			<extrude>1</extrude>
+			<tessellate>1</tessellate>
+			<altitudeMode>relativeToGround</altitudeMode>
+			<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			<coordinates>
+108.3398108262916,22.79139087997757,0 108.3452841539869,22.79372930565774,0 </coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark>
+		<name>白沙大桥</name>
+		<styleUrl>#msn_ylw-pushpin10</styleUrl>
+		<LineString>
+			<extrude>1</extrude>
+			<tessellate>1</tessellate>
+			<altitudeMode>relativeToGround</altitudeMode>
+			<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			<coordinates>
+108.3354754767678,22.79266441353791,0 108.3360400286005,22.79812003786065,0 </coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark>
+		<name>邕江大桥</name>
+		<styleUrl>#msn_ylw-pushpin10</styleUrl>
+		<LineString>
+			<extrude>1</extrude>
+			<tessellate>1</tessellate>
+			<altitudeMode>relativeToGround</altitudeMode>
+			<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			<coordinates>
+108.3129265721445,22.81086293665382,0 108.3170640729682,22.8147589740181,0 </coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark>
+		<name>北大桥</name>
+		<styleUrl>#msn_ylw-pushpin10</styleUrl>
+		<LineString>
+			<extrude>1</extrude>
+			<tessellate>1</tessellate>
+			<altitudeMode>relativeToGround</altitudeMode>
+			<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			<coordinates>
+108.3125464058855,22.81072500005865,0 108.3107046019841,22.81622421984346,0 </coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark>
+		<name>桃源大桥</name>
+		<styleUrl>#msn_ylw-pushpin10</styleUrl>
+		<LineString>
+			<extrude>1</extrude>
+			<tessellate>1</tessellate>
+			<altitudeMode>relativeToGround</altitudeMode>
+			<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			<coordinates>
+108.3206084546557,22.80719327841221,0 108.3154177782629,22.80633090901261,0 </coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark>
+		<name>铁路桥</name>
+		<styleUrl>#msn_ylw-pushpin10</styleUrl>
+		<LineString>
+			<extrude>1</extrude>
+			<tessellate>1</tessellate>
+			<altitudeMode>relativeToGround</altitudeMode>
+			<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			<coordinates>
+108.2894548154837,22.80114578928928,0 108.2908655494595,22.80695872357682,0 </coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark>
+		<name>南宁大桥</name>
+		<styleUrl>#msn_ylw-pushpin10</styleUrl>
+		<LineString>
+			<extrude>1</extrude>
+			<tessellate>1</tessellate>
+			<altitudeMode>relativeToGround</altitudeMode>
+			<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			<coordinates>
+108.366541771087,22.78838728520435,0 108.3691750056466,22.78234211071345,0 </coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark>
+		<name>凌铁大桥</name>
+		<styleUrl>#msn_ylw-pushpin10</styleUrl>
+		<LineString>
+			<extrude>1</extrude>
+			<tessellate>1</tessellate>
+			<altitudeMode>relativeToGround</altitudeMode>
+			<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			<coordinates>
+108.3162300815987,22.7987779944778,0 108.3226266903994,22.79938264495395,0 </coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark>
+		<name>永和大桥</name>
+		<styleUrl>#msn_ylw-pushpin10</styleUrl>
+		<LineString>
+			<extrude>1</extrude>
+			<tessellate>1</tessellate>
+			<altitudeMode>relativeToGround</altitudeMode>
+			<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			<coordinates>
+108.2917638144892,22.80080103715418,0 108.2928390961774,22.80671588196167,0 </coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark>
+		<name>中兴大桥</name>
+		<styleUrl>#msn_ylw-pushpin10</styleUrl>
+		<LineString>
+			<extrude>1</extrude>
+			<tessellate>1</tessellate>
+			<altitudeMode>relativeToGround</altitudeMode>
+			<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			<coordinates>
+108.2742408933766,22.81059658620033,0 108.2791318246797,22.81466895795328,0 </coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark>
+		<name>清川大桥</name>
+		<styleUrl>#msn_ylw-pushpin10</styleUrl>
+		<LineString>
+			<extrude>1</extrude>
+			<tessellate>1</tessellate>
+			<altitudeMode>relativeToGround</altitudeMode>
+			<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			<coordinates>
+108.2491519773498,22.8271398459262,0 108.2490713889846,22.83236721751008,0 </coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark>
+		<name>托州大桥</name>
+		<styleUrl>#msn_ylw-pushpin10</styleUrl>
+		<LineString>
+			<tessellate>1</tessellate>
+			<coordinates>
+108.1901319047363,22.77520890904765,0 108.196153186068,22.76856470496215,0 </coordinates>
+		</LineString>
+	</Placemark>
+</Document>
+</kml>
