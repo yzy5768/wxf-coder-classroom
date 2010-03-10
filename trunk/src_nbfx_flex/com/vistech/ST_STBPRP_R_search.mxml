@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  这个控件提供了对表 st_stbprp_b 主要的查询操作
+  包括：站点种类的多选查询,报汛等级的多选查询
+  控件有一个事件监听器：点击查询按钮
+  当查询按钮按下以后,按钮的样式会变化,可以通过外部重新改变按钮的样式
+  有连个漂浮框.一个提供站点种类选择,一个提供站点报汛等级选择
+  
+  引用这个控件的时候,最好让控件的长宽设置为:550*250
+ @Copyright www.vistech.com.cn
+ @author wxf
+ @version 2010-01-19
+ @see config.xml,提供后台的路径
+ @see SL323—2005,ICS 35.040,L 71,实时雨水情数据库表结构与标识符标准,介绍 ST_STBPRP_B 的由来
+ @see app.php,默认的后台路径,唯一的,可以通过 controller action 等参数调用各种功能,大多数返回的数据是 XML 格式
+-->
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" xmlns:flexlib="http://code.google.com/p/flexlib/" initialize="config()" xmlns:vistech="com.vistech.*">
+<mx:Script>
+	<![CDATA[
+		import mx.controls.NumericStepper;
+		import mx.controls.DateField;
+		import mx.controls.TextInput;
+		import mx.controls.CheckBox;
+		import mx.core.Application;
+		import mx.controls.ComboBox;
+		import mx.controls.ComboBase;
+		import flexlib.containers.FlowContainer;
+		import mx.containers.FormItem;
+		import mx.containers.Form;
+		import mx.events.CloseEvent;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.rpc.http.mxml.HTTPService;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.events.FaultEvent;
+		
+		/**
+		 * 给 保存 按钮绑定事件
+		 * 一旦点击,立刻改变按钮属性
+		 * TODO 要增加 点击后,改变按钮状态
+		 * */
+		public function searchButClick():void{
+			var inputArr:Array = (getChildAt(0) as FlowContainer).getChildren();
+			for(var i:int=0;i<inputArr.length;i++){
+				if(inputArr[i] as TextInput||inputArr[i] as DateField){
+					if(inputArr[i].text==""){
+						Alert.show("所有输入框都是必填项");return;
+					}
+				}
+				/*
+				else if(inputArr[i] as NumericStepper){
+					if((inputArr[i] as NumericStepper).value.toString()=="")Alert.show("所有输入框都是必填项");return;
+				}
+				*/
+			}
+			butSearch.label = "正在通信...";
+			butSearch.enabled = false;
+			dispatchEvent( new Event( "clickSearchBut" ) );
+		}
+		
+		/**
+		 * 通信结束之后,恢复按钮的状态
+		 * TODO 没有使用
+		 * */
+		public function httpServiceStopped():void{
+			butSearch.label = "查询";
+			butSearch.enabled = true;
+		}
+		
+		/**
+		 * 读取配置文件,此函数在控件初始化后运行
+		 * 为 combox 的下拉框填充数据
+		 * 需要向后台读取 config.xml 
+		 * */
+		private function config():void{
+			var httpservice:HTTPService = new HTTPService();
+		    httpservice.url = "st_stbprp_search.xml";
+		    httpservice.method = "GET";
+			httpservice.addEventListener(ResultEvent.RESULT, function(event:ResultEvent){
+				((getChildAt(0) as FlowContainer).getChildByName("DATE_TYPE") as ComboBox).dataProvider = event.result.vistech.dataProvider.ST_STBPRP_R.item;
+			});
+			httpservice.addEventListener(FaultEvent.FAULT, function(event:FaultEvent):void{
+				Alert.show("无法读取配置文件 st_stbprp_search.xml , 请将 st_stbprp_search.xml 放到 地图 文件的同目录下,或者 st_stbprp_search.xml 文件格式错误");
+			});			
+			httpservice.send();
+		}
+		
+		/**
+		 * 返回查询条件
+		 * @return Dictionary 一个哈希表
+		 * */
+		public function getSearchConditions():Dictionary{
+			var conditions:Dictionary = new Dictionary();
+			var inputArr:Array = (getChildAt(0) as FlowContainer).getChildren();
+			for(var i:int=0;i<inputArr.length;i++){
+				if(inputArr[i] as TextInput||inputArr[i] as DateField){
+					if(inputArr[i].text!="")conditions[inputArr[i].name] = inputArr[i].text;
+				}else if(inputArr[i] as ComboBox){
+					if(inputArr[i].editable==true){
+						if(inputArr[i].text!="")conditions[inputArr[i].name] = inputArr[i].text;
+					}else{
+						if(inputArr[i].text!="")conditions[inputArr[i].name] = (inputArr[i] as ComboBox).selectedItem.data;
+					}
+				}else if(inputArr[i] as NumericStepper){
+					if((inputArr[i] as NumericStepper).value.toString()!="")conditions[inputArr[i].name] = (inputArr[i] as NumericStepper).value;
+				}
+			}
+			return conditions;
+		}
+		
+	]]>
+</mx:Script>
+	<flexlib:FlowContainer width="100%" height="90%">
+	    <mx:Label width="80" text="种类" /><mx:ComboBox name="DATE_TYPE" width="120" editable="false"/>
+		<mx:Label width="80" text="最大累计值" /><mx:TextInput name="MAX" width="120" restrict="0-9\." maxChars="8"/>
+		<mx:Label width="80" text="最小累计值" /><mx:TextInput name="MIN" width="120" restrict="0-9\." maxChars="8" />
+		<mx:Label width="80" text="起时间" /><mx:DateField name="DATE_START" restrict="0-9\-" editable="true" width="100" formatString="YYYY-MM-DD"/>
+			<mx:NumericStepper name="HOUR_START" width="40"  maximum="23" minimum="0"/>
+				<mx:Label text="时" width="20" />
+		<mx:Label width="80" text="止时间" /><mx:DateField name="DATE_END" restrict="0-9\-" editable="true" width="100" formatString="YYYY-MM-DD"/>
+			<mx:NumericStepper name="HOUR_END" width="40" maximum="23" minimum="0"/>
+				<mx:Label text="时" width="20" />
+	</flexlib:FlowContainer>
+	<mx:Button label="查询" click="searchButClick()"  bottom="10" left="10" id="butSearch"/>
+
+
+    
+    <!--为按钮添加事件,使得按钮可以被外部监听-->
+	<mx:Metadata>
+        [Event(name="clickSearchBut", type="flash.events.Event")]
+    </mx:Metadata>
+</mx:Canvas>

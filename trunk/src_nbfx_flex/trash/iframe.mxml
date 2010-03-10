@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" xmlns:vistech="com.vistech.*" xmlns:flexiframe="com.google.code.flexiframe.*">
+	    <flexiframe:IFrame id="googleIFrame"
+                       label="Google"
+                       source="http://www.google.com"
+                       width="80%"
+                       height="80%"/>
+
+</mx:Application>

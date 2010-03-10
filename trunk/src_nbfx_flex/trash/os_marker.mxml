@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" initialize="initMap()">
+<mx:Script>
+	<![CDATA[
+		import org.openscales.fx.layer.FxWMS;
+		import org.openscales.fx.FxMap;
+		import mx.controls.Button;
+		import mx.controls.Alert;
+		import mx.events.FlexEvent;
+		import mx.containers.Canvas;
+		import org.openscales.core.basetypes.LonLat;
+		import org.openscales.core.layer.ogc.WMS;
+		import org.openscales.core.Map;	
+		
+		private function initMap():void{
+			var canvas:Canvas = new Canvas();
+			canvas.width = this.width;
+			canvas.height = this.height;
+
+			var map:FxMap = new FxMap();
+			canvas.addChild(map);
+			map.width = canvas.width;
+			map.height = canvas.height;
+			var wmsLayer:FxWMS = new FxWMS();
+			wmsLayer.url = "http://58.59.136.84:8080/geoserver/wms";
+			wmsLayer.layers = "nnfx2";
+			wmsLayer.projection = "EPSG:4326";
+		 	map.addChild(wmsLayer);
+		}
+	]]>
+</mx:Script>
+</mx:Application>

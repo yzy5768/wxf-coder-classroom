@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" xmlns:vistech="com.vistech.*" initialize="init()">
+<mx:Script>
+	<![CDATA[
+		function init(){
+			test.setAppURL("http://localhost:8003/app.php");
+			test.readChartData("80716200","2009-08-08","2010-01-01","month");
+		}
+	]]>
+</mx:Script>
+<vistech:ST_RSVR_R_chart width="100%" height="100%" id="test" />	
+</mx:Application>

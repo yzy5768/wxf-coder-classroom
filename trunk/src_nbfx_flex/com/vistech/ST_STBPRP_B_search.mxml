@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  这个控件提供了对表 st_stbprp_b 主要的查询操作
+  包括：站点种类的多选查询,报汛等级的多选查询
+  控件有一个事件监听器：点击查询按钮
+  当查询按钮按下以后,按钮的样式会变化,可以通过外部重新改变按钮的样式
+  有连个漂浮框.一个提供站点种类选择,一个提供站点报汛等级选择
+  
+  引用这个控件的时候,最好让控件的长宽设置为:550*250
+ @Copyright www.vistech.com.cn
+ @author wxf
+ @version 2010-01-19
+ @see config.xml,提供后台的路径
+ @see SL323—2005,ICS 35.040,L 71,实时雨水情数据库表结构与标识符标准,介绍 ST_STBPRP_B 的由来
+ @see app.php,默认的后台路径,唯一的,可以通过 controller action 等参数调用各种功能,大多数返回的数据是 XML 格式
+-->
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" xmlns:flexlib="http://code.google.com/p/flexlib/" initialize="config()" xmlns:vistech="com.vistech.*">
+<mx:Script>
+	<![CDATA[
+		import mx.controls.TextInput;
+		import mx.controls.CheckBox;
+		import mx.core.Application;
+		import mx.controls.ComboBox;
+		import mx.controls.ComboBase;
+		import flexlib.containers.FlowContainer;
+		import mx.containers.FormItem;
+		import mx.containers.Form;
+		import mx.events.CloseEvent;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.rpc.http.mxml.HTTPService;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.events.FaultEvent;
+		
+		
+		public var app:Application = null;
+		
+		/**
+		 * 给 保存 按钮绑定事件
+		 * 一旦点击,立刻改变按钮属性
+		 * */
+		public function searchButClick():void{
+			butSearch.label = "正在通信...";
+			butSearch.enabled = false;
+			dispatchEvent( new Event( "clickSearchBut" ) );
+		}
+		
+		/**
+		 * 给 保存 按钮绑定事件,结合数据
+		 * 一旦点击,立刻改变按钮属性
+		 * */
+		public function searchButClickWithData():void{
+			dispatchEvent( new Event( "clickSearchButWithData" ) );
+		}		
+		
+		/**
+		 * 给 保存 按钮绑定事件,结合数据
+		 * 一旦点击,立刻改变按钮属性
+		 * */
+		public function searchWithData():void{
+			dispatchEvent( new Event( "clickSearchWithDataBut" ) );
+		}
+		
+		/**
+		 * 通信结束之后,恢复按钮的状态
+		 * TODO 没有使用
+		 * */
+		public function httpServiceStopped():void{
+			butSearch.label = "查询";
+			butSearch.enabled = true;
+		}
+		
+		/**
+		 * 读取配置文件,此函数在控件初始化后运行
+		 * 为 combox 的下拉框填充数据
+		 * 需要向后台读取 config.xml 
+		 * */
+		private function config():void{
+			var httpservice:HTTPService = new HTTPService();
+		    httpservice.url = "st_stbprp_search.xml";
+		    httpservice.method = "GET";
+			httpservice.addEventListener(ResultEvent.RESULT, setCheckBoxList);
+			httpservice.addEventListener(FaultEvent.FAULT, function(event:FaultEvent):void{
+				Alert.show("无法读取配置文件 st_stbprp_search.xml , 请将 st_stbprp_search.xml 放到 地图 文件的同目录下,或者 st_stbprp_search.xml 文件格式错误");
+			});			
+			httpservice.send();
+		}
+		
+		/**
+		 * 根据配置文件中的数据,给站点类型 报汛等级 行政区划 输入框配上 弹出窗口
+		 * 使用勾选框,以实现1个或多个查询条件
+		 * */
+		private function setCheckBoxList(event:ResultEvent):void{
+			
+			var STTP:Array = (event.result.vistech.dataProvider.STTP.item as ArrayCollection).toArray();
+			//给漂浮框中添加站点种类 勾选框
+			for(var i:int=0;i<STTP.length;i++){
+				var checkBox:CheckBox = new CheckBox();
+				checkBox.label = STTP[i].label;
+				checkBox.name = STTP[i].data;
+				((getChildByName("STTPCheckBoxList") as SuperPanel).getChildAt(0) as FlowContainer).addChild(checkBox);
+			}
+			
+			var FRGRD:Array = (event.result.vistech.dataProvider.FRGRD.item as ArrayCollection).toArray();
+			for(var i:int=0;i<FRGRD.length;i++){
+				var checkBox:CheckBox = new CheckBox();
+				checkBox.label = FRGRD[i].label;
+				checkBox.name = FRGRD[i].data;
+				((getChildByName("FRGRDCheckBoxList") as SuperPanel).getChildAt(0) as FlowContainer).addChild(checkBox);
+			}
+			
+			var district:Array = (event.result.vistech.dataProvider.district.item as ArrayCollection).toArray();
+			for(var i:int=0;i<district.length;i++){
+				var checkBox:CheckBox = new CheckBox();
+				checkBox.label = district[i].label;
+				checkBox.name = district[i].data;
+				((getChildByName("districtCheckBoxList") as SuperPanel).getChildAt(0) as FlowContainer).addChild(checkBox);
+			}										
+		}
+		
+		/**
+		 * 返回查询条件
+		 * @return Dictionary 一个哈希表
+		 * */
+		public function getSearchConditions():Dictionary{
+			var conditions:Dictionary = new Dictionary();
+			var inputArr:Array = (getChildAt(0) as FlowContainer).getChildren();
+			for(var i:int=0;i<inputArr.length;i++){
+				if(inputArr[i] as TextInput){
+					if(inputArr[i].text!="")conditions[inputArr[i].name] = inputArr[i].text;
+				}else if(inputArr[i] as ComboBox){
+					if(inputArr[i].editable==true){
+						if(inputArr[i].text!="")conditions[inputArr[i].name] = inputArr[i].text;
+					}else{
+						if(inputArr[i].text!="")conditions[inputArr[i].name] = (inputArr[i] as ComboBox).selectedItem.data;
+					}
+				}
+			}
+			return conditions;
+		}
+		
+		/**
+		 * 保存站点类型时,将 checkList 中的值遍历,并赋值到 文本输入框 中
+		 * */
+		public function saveSTTPCheckList():void{
+			//获得 STTPCheckBoxList第一个子元素(浮动布局框)中的所有子元素,即勾选框
+			var checkBoxList:Array = ((getChildByName("STTPCheckBoxList") as SuperPanel).getChildAt(0) as FlowContainer).getChildren();
+			var datas:String = new String();//用来保存勾选框的数据
+			for(var i:int=0;i<checkBoxList.length;i++){//遍历元素,如果状态为 勾选上 ,则返回值
+				if((checkBoxList[i] as CheckBox).selected){
+					datas += (checkBoxList[i] as CheckBox).name+",";
+				}
+			}
+			if(datas.length>0)datas = datas.substr(0,datas.length-1);
+			((getChildByName("conditionsList") as FlowContainer).getChildByName("STTP") as TextInput).text = datas;
+			(getChildByName("STTPCheckBoxList") as SuperPanel).visible = false;
+		}
+		
+		/**
+		 * 获得报汛等级的 勾选框 内容
+		 * */
+		public function saveFRGRDCheckList():void{
+			var checkBoxList:Array = ((getChildByName("FRGRDCheckBoxList") as SuperPanel).getChildAt(0) as FlowContainer).getChildren();
+			var datas:String = new String();
+			for(var i:int=0;i<checkBoxList.length;i++){
+				if((checkBoxList[i] as CheckBox).selected){
+					datas += (checkBoxList[i] as CheckBox).name+",";
+				}
+			}
+			if(datas.length>0)datas = datas.substr(0,datas.length-1);
+			((getChildByName("conditionsList") as FlowContainer).getChildByName("FRGRD") as TextInput).text = datas;
+			(getChildByName("FRGRDCheckBoxList") as SuperPanel).visible = false;
+		}
+		
+		/**
+		 * 获得所属县区的 勾选框 内容
+		 * */		
+		public function savedistrictCheckList():void{
+			var checkBoxList:Array = ((getChildByName("districtCheckBoxList") as SuperPanel).getChildAt(0) as FlowContainer).getChildren();
+			var datas:String = new String();
+			for(var i:int=0;i<checkBoxList.length;i++){
+				if((checkBoxList[i] as CheckBox).selected){
+					datas += (checkBoxList[i] as CheckBox).name+",";
+				}
+			}
+			if(datas.length>0)datas = datas.substr(0,datas.length-1);
+			((getChildByName("conditionsList") as FlowContainer).getChildByName("district") as TextInput).text = datas;
+			(getChildByName("districtCheckBoxList") as SuperPanel).visible = false;
+		}
+		
+		public function getSearchConditionsWithData():Dictionary{
+			var st_stbprp_r:ST_STBPRP_R_search = (getChildByName("searchWithData") as SuperPanel).getChildAt(0) as ST_STBPRP_R_search;
+			var conditionsWithData:Dictionary = st_stbprp_r.getSearchConditions();//将数据结合控件的查询条件和这个控件的查询条件结合起来
+			var conditionsThis:Dictionary = this.getSearchConditions();
+			for(var key:String in conditionsWithData){
+				conditionsThis[key] = conditionsWithData[key]
+			}
+			return conditionsThis;
+		}
+		
+		/***
+		 * 提供拍报项目选择框,这是一个弹出式窗口
+		 * */
+		public function clickFRITM():void{
+			var window:SuperPanel = new SuperPanel();
+			window.allowClose = true;
+			window.allowDrag = true;
+			window.title = "选择拍报项目";
+			var fritmCheckList:ST_STBPRP_B_FRITM_checkList = new ST_STBPRP_B_FRITM_checkList();
+			fritmCheckList.addEventListener("saveButClick",function():void{
+				var array:Array = fritmCheckList.getCheckedItem();
+				var fritm:String = new String();
+				fritm = "00000000000000000000000000000000";
+				for(var i:int = 0;i<array.length;i++){
+					fritm = fritm.substring(0,(array[i] as int)) + "1" + fritm.substr((array[i] as int)+1);
+				}
+				((getChildAt(0) as FlowContainer).getChildByName("FRITM") as TextInput).text = fritm;
+				app.removeChild(window);
+			});	
+			window.addChild(fritmCheckList);
+			this.app.addChild(window);
+			window.addEventListener(CloseEvent.CLOSE,function ():void{app.removeChild(window);});
+			fritmCheckList.setCheckedItem(((getChildAt(0) as FlowContainer).getChildByName("FRITM") as TextInput).text);
+			window.x = (Capabilities.screenResolutionX - app.contentMouseX)>400?app.contentMouseX:app.contentMouseX-400;
+			window.y = (Capabilities.screenResolutionY - app.contentMouseY)>350?app.contentMouseY:app.contentMouseY-200;
+		}
+		
+
+	]]>
+</mx:Script>
+	<flexlib:FlowContainer width="100%" height="90%" name="conditionsList">
+		<mx:Label width="90" text="测站编码" /><mx:TextInput name="STCD" width="150" restrict="0-9" maxChars="8"/>
+		<mx:Label width="90" text="测站名称" /><mx:TextInput name="STNM" width="150" />
+		<mx:Label width="90" text="站类" /><mx:TextInput name="STTP" click="(getChildByName('STTPCheckBoxList') as SuperPanel).visible = true" editable="false" width="150"/>
+		<mx:Label width="90" text="报汛等级" /><mx:TextInput name="FRGRD" click="(getChildByName('FRGRDCheckBoxList') as SuperPanel).visible = true" editable="false" width="150"/>
+		<mx:Label width="90" text="管理机构" /><mx:TextInput name="ADMAUTH" width="150" />
+		<mx:Label width="90" text="拍报项目" /><mx:TextInput name="FRITM" editable="false" click="clickFRITM()" width="150" />
+		<mx:Label width="90" text="所属县区" /><mx:TextInput name="district" click="(getChildByName('districtCheckBoxList') as SuperPanel).visible = true" editable="false" width="150"/>
+	</flexlib:FlowContainer>
+	<mx:Button label="查询" click="searchButClick()" bottom="10" left="10" id="butSearch"/>
+	<mx:Button label="结合数据" click="searchWithData()" bottom="10" right="10"/>
+
+    <!--几个隐藏的 种类多选框-->
+    <vistech:SuperPanel name="STTPCheckBoxList" allowClose="true" allowDrag="true" allowMinimize="true" title="选择要查的站点种类" visible="false" top="5" left="5" width="90%" height="80%" close="(getChildByName('STTPCheckBoxList') as SuperPanel).visible = false" >
+    	<flexlib:FlowContainer width="100%" height="100%"/>
+    	<mx:Button label="保存" click="saveSTTPCheckList()" />
+    </vistech:SuperPanel>
+    <vistech:SuperPanel name="FRGRDCheckBoxList" allowClose="true" allowDrag="true" allowMinimize="true" title="选择要查的报汛等级" visible="false" top="5" left="5" width="90%" height="80%" close="(getChildByName('FRGRDCheckBoxList') as SuperPanel).visible = false" >
+    	<flexlib:FlowContainer width="100%" height="100%"/>
+    	<mx:Button label="保存" click="saveFRGRDCheckList()" />
+    </vistech:SuperPanel>
+     <vistech:SuperPanel name="districtCheckBoxList" allowClose="true" allowDrag="true" allowMinimize="true" title="选择要查寻的区域" visible="false" top="5" left="5" width="90%" height="80%" close="(getChildByName('districtCheckBoxList') as SuperPanel).visible = false" >
+    	<flexlib:FlowContainer width="100%" height="100%"/>
+    	<mx:Button label="保存" click="savedistrictCheckList()" />
+    </vistech:SuperPanel>
+    
+    <!--为按钮添加事件,使得按钮可以被外部监听-->
+	<mx:Metadata>
+        [Event(name="clickSearchBut", type="flash.events.Event")]
+        [Event(name="clickSearchWithDataBut", type="flash.events.Event")]
+    </mx:Metadata>
+</mx:Canvas>
