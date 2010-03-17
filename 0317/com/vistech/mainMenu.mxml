@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--TODO,菜单栏要根据用户的权限自定义设置,需要新建一个 compoment 来设置-->
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+           width="100%"
+           height="100%" initialize="readMenuDataByHttp()">
+    <mx:Script>
+        <![CDATA[
+        	import mx.controls.dataGridClasses.DataGridColumn;
+        	import mx.controls.DataGrid;
+        	import org.openscales.core.layer.Layer;
+        	import mx.effects.Fade;
+        	import mx.controls.Button;
+        	import mx.controls.Label;
+        	import mx.containers.VBox;
+        	import mx.collections.ArrayCollection;
+        	import mx.events.CloseEvent;
+        	import mx.controls.Alert;
+        	import mx.rpc.http.mxml.HTTPService;
+        	import mx.rpc.events.FaultEvent;
+        	import mx.rpc.events.ResultEvent;
+        	import mx.core.Application;
+            import org.openscales.core.basetypes.LonLat;
+            import org.openscales.core.layer.FeatureLayer;
+            import mx.events.MenuEvent;
+            import org.openscales.core.Map;
+            private var map:Map=null;
+
+            //默认的后台文件路径,可以通过 app.php?controller=c1&action=a2调用不同数据
+            private var appURL:String="app.php";
+            
+            private var searchKMLLayers:LayerKML = null;
+            
+            public var app:Application = null;
+
+            public function setMap(myMap:Map):void
+            {
+                this.map=myMap;
+            }
+
+            /**
+             * 设置 appURL 的路径,通过 appURL ,实现与后台通信.这样,即便主文件(swf文件)与后台文件不在一个目录下,只要通过配置文件config.xml
+             * 程序仍然可以运行
+             * 比如用户将 swf 文件下载到了本地文件夹,仍然可以实现访问
+             * config.xml 的数据,一般在 application 初始化时向后台一次性读到用户浏览器的内存中
+             * */
+            public function setAppURL(path:String):void
+            {
+                this.appURL=path;
+            }
+            
+            public function readMenuDataByHttp():void
+            {
+            	var httpservice:HTTPService = new HTTPService();
+			    httpservice.url = this.appURL+"?controller=vt_users&action=getMenuListById";
+			    httpservice.method = "GET";
+				httpservice.addEventListener(ResultEvent.RESULT, function(event:ResultEvent){
+					initMenu(event.result.menuData.menuItem);
+				});
+				httpservice.addEventListener(FaultEvent.FAULT, function(event:FaultEvent):void{
+					Alert.show("无法读取配置文件 config.xml , 请将 config.xml 放到 地图 文件的同目录下,或者 config.xml 文件格式错误");
+				});			
+				httpservice.send();
+            }
+            
+            public function initMenu(menuList:ArrayCollection):void
+            {
+            	for(var i:int=0;i<menuList.length;i++)
+            	{
+            		var vBox:VBox = new VBox();
+            		vBox.label = (menuList[i] as Object).value;
+            		var arr:ArrayCollection = (menuList[i] as Object).menuItem;
+            		for(var j:int=0;j<arr.length;j++)
+            		{
+            			var obj:Object = arr[j] as Object;
+            			var label:Label = new Label();
+            			label.text = obj.value;
+            			label.width = 140;
+            			label.addEventListener(MouseEvent.MOUSE_OVER,function(event:MouseEvent){
+            				event.target.setStyle('backgroundColor','gray');
+            				event.target.setStyle('color','blue');
+            				event.target.setStyle('fontSize',14);
+            			});
+            			label.addEventListener(MouseEvent.MOUSE_OUT,function(){
+							label.clearStyle('menuItemActive');
+            			});
+            			label.addEventListener(MouseEvent.CLICK,menuItemClick);
+            			vBox.addChild(label);
+            		}
+            		accordion.addChild(vBox);
+            	}
+            }
+
+            public function menuItemClick(event:MouseEvent)
+            {
+            	if(event.target.text.toString()=="水库")
+            	{
+            		for(var i:int =0 ;i<map.layers.length;i++){
+						if(!(map.layers[i] as Layer).isBaseLayer){
+							map.removeLayer(map.layers[i]);
+						}
+					}
+					var layerXmlData:LayerXMLData = new LayerXMLData(map,"0.703125, 0.3515625, 0.17578125, 0.087890625, 0.0439453125, 0.02197265625, 0.010986328125, 0.0054931640625, 0.00274658203125, 0.001373291015625, 6.866455078125E-4, 3.4332275390625E-4, 1.71661376953125E-4, 8.58306884765625E-5, 4.291534423828125E-5, 2.1457672119140625E-5, 1.0728836059570312E-5, 5.364418029785156E-6, 2.682209014892578E-6, 1.341104507446289E-6, 6.705522537231445E-7, 3.3527612686157227E-7, 1.6763806343078613E-7, 8.381903171539307E-8, 4.190951585769653E-8, 2.0954757928848267E-8, 1.0477378964424133E-8, 5.238689482212067E-9, 2.6193447411060333E-9, 1.3096723705530167E-9, 6.548361852765083E-10");
+					layerXmlData.stationType = "HYDRO_RR";
+	                layerXmlData.readXmlData("http://58.59.136.84/openGIS/GetDataXml.php?SqlCmd=GetStationInfo 'RR','1,2,3,4'",null);
+            	}
+            	if(event.target.text.toString()=="河流")
+            	{
+            		for(var i:int =0 ;i<map.layers.length;i++){
+						if(!(map.layers[i] as Layer).isBaseLayer){
+							map.removeLayer(map.layers[i]);
+						}
+					}
+					var layerKML:LayerKML = new LayerKML(map,"0.703125, 0.3515625, 0.17578125, 0.087890625, 0.0439453125, 0.02197265625, 0.010986328125, 0.0054931640625, 0.00274658203125, 0.001373291015625, 6.866455078125E-4, 3.4332275390625E-4, 1.71661376953125E-4, 8.58306884765625E-5, 4.291534423828125E-5, 2.1457672119140625E-5, 1.0728836059570312E-5, 5.364418029785156E-6, 2.682209014892578E-6, 1.341104507446289E-6, 6.705522537231445E-7, 3.3527612686157227E-7, 1.6763806343078613E-7, 8.381903171539307E-8, 4.190951585769653E-8, 2.0954757928848267E-8, 1.0477378964424133E-8, 5.238689482212067E-9, 2.6193447411060333E-9, 1.3096723705530167E-9, 6.548361852765083E-10");
+					layerKML.readKml(this.appURL+"?controller=vt_projects_river&action=readkml",null);
+					map.addLayer(layerKML.mainlayer);
+				}
+            	if(event.target.text.toString()=="堤防")
+            	{
+            		for(var i:int =0 ;i<map.layers.length;i++){
+						if(!(map.layers[i] as Layer).isBaseLayer){
+							map.removeLayer(map.layers[i]);
+						}
+					}
+					var layerKML:LayerKML = new LayerKML(map,"0.703125, 0.3515625, 0.17578125, 0.087890625, 0.0439453125, 0.02197265625, 0.010986328125, 0.0054931640625, 0.00274658203125, 0.001373291015625, 6.866455078125E-4, 3.4332275390625E-4, 1.71661376953125E-4, 8.58306884765625E-5, 4.291534423828125E-5, 2.1457672119140625E-5, 1.0728836059570312E-5, 5.364418029785156E-6, 2.682209014892578E-6, 1.341104507446289E-6, 6.705522537231445E-7, 3.3527612686157227E-7, 1.6763806343078613E-7, 8.381903171539307E-8, 4.190951585769653E-8, 2.0954757928848267E-8, 1.0477378964424133E-8, 5.238689482212067E-9, 2.6193447411060333E-9, 1.3096723705530167E-9, 6.548361852765083E-10");
+					layerKML.readKml(this.appURL+"?controller=vt_projects_dike&action=readkml",null);
+					map.addLayer(layerKML.mainlayer);
+				}				
+            	if(event.target.text.toString()=="泵站")
+            	{
+            		for(var i:int =0 ;i<map.layers.length;i++){
+						if(!(map.layers[i] as Layer).isBaseLayer){
+							map.removeLayer(map.layers[i]);
+						}
+					}
+					/*
+					var layerKML2:LayerKML = new LayerKML(map,"0.703125, 0.3515625, 0.17578125, 0.087890625, 0.0439453125, 0.02197265625, 0.010986328125, 0.0054931640625, 0.00274658203125, 0.001373291015625, 6.866455078125E-4, 3.4332275390625E-4, 1.71661376953125E-4, 8.58306884765625E-5, 4.291534423828125E-5, 2.1457672119140625E-5, 1.0728836059570312E-5, 5.364418029785156E-6, 2.682209014892578E-6, 1.341104507446289E-6, 6.705522537231445E-7, 3.3527612686157227E-7, 1.6763806343078613E-7, 8.381903171539307E-8, 4.190951585769653E-8, 2.0954757928848267E-8, 1.0477378964424133E-8, 5.238689482212067E-9, 2.6193447411060333E-9, 1.3096723705530167E-9, 6.548361852765083E-10");
+					layerKML2.readKml(this.appURL+"?controller=pumbingStation&action=readkml",null);
+					map.addLayer(layerKML2.mainlayer);
+					
+					
+					var httpservice:HTTPService = new HTTPService();
+				    httpservice.url = this.appURL+"?controller=pumbingStation&action=getXMLDataWithOutCache";
+					httpservice.addEventListener(ResultEvent.RESULT, function(event:ResultEvent){
+						var gid:DataGrid = new DataGrid();
+						var arr:Array = new Array();
+						var column:DataGridColumn = new DataGridColumn();
+						column.dataField = "站名";
+						column.headerText = "站名";
+						arr.push(column);
+						gid.columns = arr;
+						gid.dataProvider = event.result.Vistech.Data.Data;
+						
+						var window:SuperPanel=new SuperPanel();
+						window.allowClose=true;
+						window.allowDrag=true;
+						window.allowMinimize=true;
+						window.allowResize = true;
+						window.width=550;
+						window.height=500;
+						window.title="工情信息";
+	                    window.addEventListener(CloseEvent.CLOSE, function()
+	                        {
+	                           removeChild(window);
+	                        });
+	                    map.parent.addChild(window);
+					});		
+					httpservice.addEventListener(FaultEvent.FAULT, function(event:FaultEvent):void{
+						Alert.show("无法连接到服务器");
+					});			
+				    httpservice.method = "POST";
+				    httpservice.send();
+					*/
+					
+					
+					var layerXmlData:LayerXMLData = new LayerXMLData(map,"0.703125, 0.3515625, 0.17578125, 0.087890625, 0.0439453125, 0.02197265625, 0.010986328125, 0.0054931640625, 0.00274658203125, 0.001373291015625, 6.866455078125E-4, 3.4332275390625E-4, 1.71661376953125E-4, 8.58306884765625E-5, 4.291534423828125E-5, 2.1457672119140625E-5, 1.0728836059570312E-5, 5.364418029785156E-6, 2.682209014892578E-6, 1.341104507446289E-6, 6.705522537231445E-7, 3.3527612686157227E-7, 1.6763806343078613E-7, 8.381903171539307E-8, 4.190951585769653E-8, 2.0954757928848267E-8, 1.0477378964424133E-8, 5.238689482212067E-9, 2.6193447411060333E-9, 1.3096723705530167E-9, 6.548361852765083E-10");
+					layerXmlData.stationType = "HYDRO_DP";
+	                layerXmlData.readXmlData(this.appURL+"?controller=pumbingStation&action=getXMLDataWithOutCache",null);
+            	
+				} 
+            	if(event.target.text.toString()=="视频站")
+            	{
+            		for(var i:int =0 ;i<map.layers.length;i++){
+						if(!(map.layers[i] as Layer).isBaseLayer){
+							map.removeLayer(map.layers[i]);
+						}
+					}
+					var layerXmlData:LayerXMLData = new LayerXMLData(map,"0.703125, 0.3515625, 0.17578125, 0.087890625, 0.0439453125, 0.02197265625, 0.010986328125, 0.0054931640625, 0.00274658203125, 0.001373291015625, 6.866455078125E-4, 3.4332275390625E-4, 1.71661376953125E-4, 8.58306884765625E-5, 4.291534423828125E-5, 2.1457672119140625E-5, 1.0728836059570312E-5, 5.364418029785156E-6, 2.682209014892578E-6, 1.341104507446289E-6, 6.705522537231445E-7, 3.3527612686157227E-7, 1.6763806343078613E-7, 8.381903171539307E-8, 4.190951585769653E-8, 2.0954757928848267E-8, 1.0477378964424133E-8, 5.238689482212067E-9, 2.6193447411060333E-9, 1.3096723705530167E-9, 6.548361852765083E-10");
+					layerXmlData.stationType = "HYDRO_VD";
+	                layerXmlData.readXmlData("http://58.59.136.84/openGIS/GetDataXml.php?SqlCmd=GetStationInfo 'VD','1,2,3,4'",null);
+            	}             	           	
+            	if(event.target.text.toString()=="河道水位")
+            	{
+            		for(var i:int =0 ;i<map.layers.length;i++){
+						if(!(map.layers[i] as Layer).isBaseLayer){
+							map.removeLayer(map.layers[i]);
+						}
+					}
+					var layerXmlData:LayerXMLData = new LayerXMLData(map,"0.703125, 0.3515625, 0.17578125, 0.087890625, 0.0439453125, 0.02197265625, 0.010986328125, 0.0054931640625, 0.00274658203125, 0.001373291015625, 6.866455078125E-4, 3.4332275390625E-4, 1.71661376953125E-4, 8.58306884765625E-5, 4.291534423828125E-5, 2.1457672119140625E-5, 1.0728836059570312E-5, 5.364418029785156E-6, 2.682209014892578E-6, 1.341104507446289E-6, 6.705522537231445E-7, 3.3527612686157227E-7, 1.6763806343078613E-7, 8.381903171539307E-8, 4.190951585769653E-8, 2.0954757928848267E-8, 1.0477378964424133E-8, 5.238689482212067E-9, 2.6193447411060333E-9, 1.3096723705530167E-9, 6.548361852765083E-10");
+					layerXmlData.stationType = "ZZ";
+	                layerXmlData.readXmlData("http://58.59.136.84/opengis/GetDataXml.php?SqlCmd=HNow05_getSpaceInfo 'ZZ'",null);
+            	}
+            	if(event.target.text.toString()=="水库水位")
+            	{
+            		for(var i:int =0 ;i<map.layers.length;i++){
+						if(!(map.layers[i] as Layer).isBaseLayer){
+							map.removeLayer(map.layers[i]);
+						}
+					}
+					var layerXmlData:LayerXMLData = new LayerXMLData(map,"0.703125, 0.3515625, 0.17578125, 0.087890625, 0.0439453125, 0.02197265625, 0.010986328125, 0.0054931640625, 0.00274658203125, 0.001373291015625, 6.866455078125E-4, 3.4332275390625E-4, 1.71661376953125E-4, 8.58306884765625E-5, 4.291534423828125E-5, 2.1457672119140625E-5, 1.0728836059570312E-5, 5.364418029785156E-6, 2.682209014892578E-6, 1.341104507446289E-6, 6.705522537231445E-7, 3.3527612686157227E-7, 1.6763806343078613E-7, 8.381903171539307E-8, 4.190951585769653E-8, 2.0954757928848267E-8, 1.0477378964424133E-8, 5.238689482212067E-9, 2.6193447411060333E-9, 1.3096723705530167E-9, 6.548361852765083E-10");
+					layerXmlData.stationType = "RR";
+	                layerXmlData.readXmlData("http://58.59.136.84/opengis/GetDataXml.php?SqlCmd=HNow05_getSpaceInfo 'RR'",null);
+            	}
+            	if(event.target.text.toString()=="降雨分布")
+            	{
+            		for(var i:int =0 ;i<map.layers.length;i++){
+						if(!(map.layers[i] as Layer).isBaseLayer){
+							map.removeLayer(map.layers[i]);
+						}
+					}
+					var layerXmlData:LayerXMLData = new LayerXMLData(map,"0.703125, 0.3515625, 0.17578125, 0.087890625, 0.0439453125, 0.02197265625, 0.010986328125, 0.0054931640625, 0.00274658203125, 0.001373291015625, 6.866455078125E-4, 3.4332275390625E-4, 1.71661376953125E-4, 8.58306884765625E-5, 4.291534423828125E-5, 2.1457672119140625E-5, 1.0728836059570312E-5, 5.364418029785156E-6, 2.682209014892578E-6, 1.341104507446289E-6, 6.705522537231445E-7, 3.3527612686157227E-7, 1.6763806343078613E-7, 8.381903171539307E-8, 4.190951585769653E-8, 2.0954757928848267E-8, 1.0477378964424133E-8, 5.238689482212067E-9, 2.6193447411060333E-9, 1.3096723705530167E-9, 6.548361852765083E-10");
+					layerXmlData.stationType = "PP";
+	                layerXmlData.readXmlData("http://58.59.136.84/opengis/GetDataXml.php?SqlCmd=HNow05_getSpaceInfo 'PP'",null);
+            	}
+            	if(event.target.text.toString()=="风情分布")
+            	{
+            		for(var i:int =0 ;i<map.layers.length;i++){
+						if(!(map.layers[i] as Layer).isBaseLayer){
+							map.removeLayer(map.layers[i]);
+						}
+					}
+					var layerXmlData:LayerXMLData = new LayerXMLData(map,"0.703125, 0.3515625, 0.17578125, 0.087890625, 0.0439453125, 0.02197265625, 0.010986328125, 0.0054931640625, 0.00274658203125, 0.001373291015625, 6.866455078125E-4, 3.4332275390625E-4, 1.71661376953125E-4, 8.58306884765625E-5, 4.291534423828125E-5, 2.1457672119140625E-5, 1.0728836059570312E-5, 5.364418029785156E-6, 2.682209014892578E-6, 1.341104507446289E-6, 6.705522537231445E-7, 3.3527612686157227E-7, 1.6763806343078613E-7, 8.381903171539307E-8, 4.190951585769653E-8, 2.0954757928848267E-8, 1.0477378964424133E-8, 5.238689482212067E-9, 2.6193447411060333E-9, 1.3096723705530167E-9, 6.548361852765083E-10");
+					layerXmlData.stationType = "MM_WIND";
+	                layerXmlData.readXmlData("http://58.59.136.84/openGIS/GetDataXml.php?SqlCmd=HNow05_getSpaceInfo 'MM'",null);
+            	}
+            	if(event.target.text.toString()=="温度分布")
+            	{
+            		for(var i:int =0 ;i<map.layers.length;i++){
+						if(!(map.layers[i] as Layer).isBaseLayer){
+							map.removeLayer(map.layers[i]);
+						}
+					}
+					var layerXmlData:LayerXMLData = new LayerXMLData(map,"0.703125, 0.3515625, 0.17578125, 0.087890625, 0.0439453125, 0.02197265625, 0.010986328125, 0.0054931640625, 0.00274658203125, 0.001373291015625, 6.866455078125E-4, 3.4332275390625E-4, 1.71661376953125E-4, 8.58306884765625E-5, 4.291534423828125E-5, 2.1457672119140625E-5, 1.0728836059570312E-5, 5.364418029785156E-6, 2.682209014892578E-6, 1.341104507446289E-6, 6.705522537231445E-7, 3.3527612686157227E-7, 1.6763806343078613E-7, 8.381903171539307E-8, 4.190951585769653E-8, 2.0954757928848267E-8, 1.0477378964424133E-8, 5.238689482212067E-9, 2.6193447411060333E-9, 1.3096723705530167E-9, 6.548361852765083E-10");
+					layerXmlData.stationType = "MM";
+	                layerXmlData.readXmlData("http://58.59.136.84/openGIS/GetDataXml.php?SqlCmd=HNow05_getSpaceInfo 'MM'",null);
+            	}            	
+            }
+            
+
+  
+        ]]>
+    </mx:Script>
+ 	<mx:Accordion id="accordion" width="150" height="100%">
+
+    </mx:Accordion>
+</mx:Canvas>

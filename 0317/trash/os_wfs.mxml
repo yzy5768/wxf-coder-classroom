@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns="*"
+                xmlns:mx="http://www.adobe.com/2006/mxml"
+                xmlns:os="http://openscales.org"
+                creationComplete="initMap();"
+                layout="absolute">
+    <mx:Canvas width="100%"
+               height="100%"
+               x="0"
+               y="0">
+
+
+        <os:Map id="fxmap"
+                centerLonLat="108.36178,22.81471"
+                zoom="7"
+                height="100%"
+                width="100%">
+            <os:TraceInfo id="traceInfo"
+                          x="{width-200}"
+                          y="0"
+                          visible="{displayTrace}"/>
+
+
+
+            <os:DragHandler/>
+            <os:WheelHandler/>
+
+            <os:Spinner id="spinner"
+                        x="{width / 2}"
+                        y="{height / 2}"/>
+            <os:MousePosition x="10"
+                              y="{height-20}"
+                              displayProjection="EPSG:4326"/>
+
+            <!--      
+                 <os:WFS name="Topp States (WFS)"
+                 url="http://openscales.org/geoserver/wfs"
+                 typename="topp:states"
+                 projection="EPSG:4326"
+                 version="1.0.0"
+                 isBaseLayer="true"
+                 style="{Style.getDefaultSurfaceStyle()}"></os:WFS>
+      -->
+      <!--
+            <os:WFS name="Topp States (WFS)"
+                    url="http://58.59.136.84:8081/geoserver/ows"
+                    typename="nnfx_postgis_23:shengjie_region"
+                    projection="EPSG:4326"
+                    version="1.0.0"
+                    isBaseLayer="true"
+                    style="{Style.getDefaultSurfaceStyle()}">
+            </os:WFS>
+            -->
+            <os:WFS name="Topp States (WFS)"
+                    url="http://58.59.136.84:8081/geoserver/ows"
+                    typename="nnfx_postgis_23:wujidaolu_polyline"
+                    projection="EPSG:4326"
+                    version="1.0.0"
+                    isBaseLayer="true"
+                    minZoomLevel="10"
+                    maxZoomLevel="11"
+                    resolutions="0.125,0.0625,0.03125,0.015625,0.0078125,0.00390625,0.001953125,0.00098765125,0.000598820625,0.0002994103125,0.00014970515625,0.000074852578125,0.0000374262890625,0.00001871314453125,0.000009356572265625,0.0000046782861328125,0.00000233914306640625"
+                     
+                    style="{Style.getDefaultSurfaceStyle()}">
+            </os:WFS>
+        </os:Map>
+
+        <mx:Script>
+            <![CDATA[
+                import org.openscales.core.events.MapEvent;
+                import org.openscales.core.Map;
+                import org.openscales.core.Trace;
+                import org.openscales.core.style.Style;
+
+                [Bindable]
+                private var map:Map=null;
+                [Bindable]
+                public var displayTrace:Boolean=false;
+                [Bindable]
+                public var displayFirebugTrace:Boolean=false;
+
+                private function initMap():void
+                {
+                    Trace.useFireBugConsole=displayFirebugTrace;
+                    map=fxmap.map;
+                }
+            ]]>
+        </mx:Script>
+
+   </mx:Canvas> 
+</mx:Application>

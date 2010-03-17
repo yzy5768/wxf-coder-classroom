@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   这个控件提供了对数据库表 ST_STBPRP_B 内单条数据的修改界面,
+   包括修改和新建
+ ST_STBPRP_B是测站基本属性表奥,其他遥测站如 河道水文站 水库水文站 气象站 都与这张表做一一映射
+   这个控件一般要和其他的页面修改控件结合起来,比如说被放置在一个 TAB 页面中
+   这个功能预计要与 GOOGLE MAP 结合
+ @Copyright www.vistech.com.cn
+ @author wxf
+ @version 2010-01-19
+ @see config.xml,提供后台的路径
+ @see SL323—2005,ICS 35.040,L 71,实时雨水情数据库表结构与标识符标准,介绍 ST_STBPRP_B 的由来
+ @see app.php,默认的后台路径,唯一的,可以通过 controller action 等参数调用各种功能,大多数返回的数据是 XML 格式
+-->
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" initialize="config()" xmlns:vistech="com.vistech.*" xmlns:flexlib="http://code.google.com/p/flexlib/"  >
+<mx:Script>
+	<![CDATA[
+		import mx.controls.CheckBox;
+		import mx.controls.NumericStepper;
+		import mx.controls.Label;
+		import mx.effects.Fade;
+		import mx.controls.dataGridClasses.DataGridColumn;
+		import mx.controls.DataGrid;
+		import mx.events.CloseEvent;
+		import com.vistech.SuperPanel;
+		import mx.core.Application;
+		import mx.controls.DateField;
+		import mx.messaging.AbstractConsumer;
+		import mx.controls.ComboBox;
+		import mx.collections.ArrayCollection;
+		import mx.rpc.events.FaultEvent;
+		import mx.controls.Alert;
+		import mx.controls.TextInput;
+		import mx.rpc.AsyncToken;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.http.HTTPService;
+		import flexlib.containers.FlowContainer;
+		
+		//默认的后台文件路径,可以通过 app.php?controller=c1&action=a2调用不同数据
+		private var appURL:String = "app.php";		
+		
+		//只能显示的列,默认的显示表格:只有站名和站编码
+		public var columns:Array = ["STCD","STNM","LGTD","LTTD","ADDVCD","RVNM","HNNM","BSNM","ADMAUTH"];
+		
+		//查询条件
+		public var searchConditions:Dictionary = null;
+		
+		//当前页码
+		private var currentPage:int = 1;
+		
+		//总页码
+		private var totalPage:int = 1;
+		
+		//是否已经被初始化
+		private var isInited:Boolean = false;
+		
+		/**
+		 * 从后台读取数据并显示到表单
+		 * 
+		 * 规定: action=read 只返回一条记录
+		 * */
+		public function readGridValue(stcd:String):void{
+			var httpservice:HTTPService = new HTTPService();
+		    httpservice.url = appURL + "?controller=st_stbprp_b&action=grid";
+			httpservice.addEventListener(ResultEvent.RESULT, getHttpData);		
+			httpservice.addEventListener(FaultEvent.FAULT, function(event:FaultEvent):void{
+				Alert.show("无法连接到服务器");
+			});			
+			var requestObject:Object = new Object();
+			if(this.searchConditions!=null)requestObject = (this.searchConditions as Object);
+			requestObject.column=this.columns.join(",");
+			requestObject.currentPage=this.currentPage;
+			httpservice.request = requestObject;
+		    httpservice.method = "POST";
+		    httpservice.send();
+		}
+		
+		/**
+		 * 获得服务器传递的数据后执行
+		 * 将表格内容填充,将分页数据填充
+		 * 
+		 * @param event 与 httpService 配套的,当通信结束之后发生 
+		 * */
+		public function getHttpData(event:ResultEvent):void{
+			var httpArr:ArrayCollection = event.result.grid_st_stbprp_b.column.vt_comment;
+			var columnsArr:Array = new Array();
+			
+			//设置 序号 列,在表格的第一列,不支持排序,无法改变宽度
+			var gridColumn:DataGridColumn = new DataGridColumn();
+			gridColumn.dataField = "index";
+			gridColumn.headerText = "NO.";
+			gridColumn.labelFunction = RowNum;
+			gridColumn.sortable = false;
+			gridColumn.resizable = false;
+			gridColumn.width = 35;
+			columnsArr.push(gridColumn);
+			
+			//根据后台提供的 所有可显示的列 和 控件中规定的只能显示的列,决定表格的列
+			//列的中文标签由后台提供
+			for(var columnIndex:int=0;columnIndex<columns.length;columnIndex++){
+				for(var httpArrIndex:int=0;httpArrIndex<httpArr.length;httpArrIndex++){
+					if(columns[columnIndex]==(httpArr[httpArrIndex] as Object).name){
+						gridColumn = new DataGridColumn();
+						gridColumn.dataField = (httpArr[httpArrIndex] as Object).name;
+						gridColumn.headerText = (httpArr[httpArrIndex] as Object).name_zh;
+						columnsArr.push(gridColumn);
+					}
+				}
+			}
+			
+			//设置表格的列和数据源
+			var dataGrid:DataGrid = getChildAt(0) as DataGrid;
+			dataGrid.columns = columnsArr;
+			dataGrid.dataProvider = (event.result.grid_st_stbprp_b.data!=null)?event.result.grid_st_stbprp_b.data.st_stbprp_b:null;
+			
+			//设置分页数据
+			(getChildAt(6) as Label).text =  " / " + event.result.grid_st_stbprp_b.page.totalPage.toString() + "页";
+			this.totalPage = int(event.result.grid_st_stbprp_b.page.totalPage.toString());											
+			(getChildAt(5) as NumericStepper).value = int(event.result.grid_st_stbprp_b.page.currentPage.toString());
+			(getChildAt(12) as Label).text =  " 共 " + event.result.grid_st_stbprp_b.page.totalCount.toString() + "条";
+			
+			//设置列选择框
+			if(this.isInited==false)this.setColumnChooseBox(event.result.grid_st_stbprp_b.column.vt_comment);
+			
+		}
+		
+		/**
+		 * 设置要显示的列
+		 * */
+		public function setStStbprpBColumn(setColums:Array):void{
+			if(setColums==null){
+				setColums = new Array();
+				var checkList:Array = flowContainer.getChildren();
+				for(var i:int=0;i<checkList.length;i++){
+					if( (checkList[i] as CheckBox).selected == true){
+						setColums.push((checkList[i] as CheckBox).name);
+					}
+				}
+			}
+			if(setColums.length==0)return;
+			this.columns = setColums;
+			this.readGridValue(null);
+		}
+		
+		/**
+		 * 为列表提供编号,将被使用多次,因为表格的每次初始化都需要这个
+		 * @parma oItem 行数目
+		 * @parma iCol 列数目
+		 * @return 计算出来的编号
+		 * */
+		private function RowNum(oItem:Object,iCol:int):String{  
+	       var iIndex:int = (getChildAt(0) as DataGrid).dataProvider.getItemIndex(oItem) + 1;  
+	       return String(iIndex);  
+     	} 
+     	
+     	/**
+     	 * 根据配置文件,设置可以显示的列
+     	 * */
+     	private function setColumnChooseBox(columnArr:ArrayCollection):void{
+     		for(var i:int=0;i<columnArr.length;i++){
+     			var checkBox:CheckBox = new CheckBox();
+     			checkBox.label = columnArr[i].name_zh;
+     			checkBox.name = columnArr[i].name;
+     			flowContainer.addChild(checkBox);
+     		}
+     		this.isInited=true;
+     	}
+     	
+     	/**
+     	 * 页面跳转
+     	 * @param str 页面跳转类型
+     	 * */
+     	public function setPage(str:String):void{
+     		if(str=="prev"){
+     			this.currentPage = (this.currentPage==1)?1:this.currentPage-1;
+     		}else if(str=="next"){
+     			this.currentPage =(this.currentPage==this.totalPage)?1:this.currentPage+1;
+     		}else if(str=="first"){
+     			this.currentPage = 1;
+     		}else if(str=="last"){
+     			this.currentPage = this.totalPage;
+     		}else if(str=="jump"){
+     			this.currentPage = (getChildAt(5) as NumericStepper).value as int;
+     		}     		
+     		this.readGridValue("asdf");
+     	}
+		
+		/**
+		 * 读取配置文件,此函数在控件初始化后运行
+		 * 
+		 * TODO 配置文件内容还会扩充
+		 * */
+		private function config():void{
+			var httpservice:HTTPService = new HTTPService();
+		    httpservice.url = "config.xml";
+		    httpservice.method = "GET";
+			httpservice.addEventListener(ResultEvent.RESULT, function(event:ResultEvent):void{
+				appURL = event.result.vistech.appURL;
+				readGridValue('asdf');
+			});
+			httpservice.addEventListener(FaultEvent.FAULT, function(event:FaultEvent):void{
+				Alert.show("无法读取配置文件 config.xml, 请将 config.xml 放到 地图 文件的同目录下");
+			});			
+			httpservice.send();
+		}
+		
+		public function setSearchConditions():void{
+			this.searchConditions = searchConditionBox.getSearchConditions();
+			searchCondtionsWin.visible=false;
+			trace(this.searchConditions);
+			this.readGridValue("asdf");
+		}
+	]]>
+</mx:Script>
+    <mx:DataGrid width="100%" bottom="50" top="0">
+        <mx:columns>
+			<mx:DataGridColumn dataField="STCD" headerText="测站编码"/>
+			<mx:DataGridColumn dataField="STNM" headerText="测站名称"/>
+        </mx:columns>
+    </mx:DataGrid> 
+    <mx:Button bottom="10" left="10" click="setPage('first')" label="《 " paddingLeft="0" paddingRight="0" width="18" cornerRadius="0"/>
+    <mx:Button bottom="10" left="36" click="setPage('prev')" label="〈 " paddingLeft="0" paddingRight="0" width="18" cornerRadius="0"/>
+    <mx:Button label=" 〉" bottom="10" click="setPage('next')" paddingLeft="0" paddingRight="0" width="20" x="62" cornerRadius="0"/>
+    <mx:Button bottom="10" left="88"  label=" 》" click="setPage('last')" paddingLeft="0" paddingRight="0" width="20" cornerRadius="0"/>
+    <mx:NumericStepper bottom="10" left="116" maximum="1000" width="47"/>
+    <mx:Label bottom="10" left="171" text=" / 7 页"/>
+    <mx:Button bottom="10" left="218" label="跳页" click="setPage('jump')"/>
+    
+    <mx:Button bottom="10" left="314" label="选择列" click="searchCondtionsWin.visible = true" />
+    
+    <mx:Button bottom="10" left="381" label="查询 " click="chooseColumn.visible = true"/>
+    
+   
+    <mx:Button bottom="10" left="437" label="excel导出"/>
+    <mx:Button bottom="10" left="523" label="打印"/>
+    
+    
+    <mx:Label bottom="10" right="52" text="共100条"/>
+    
+	<vistech:SuperPanel title="选择要显示的列" width="500" height="300" id="chooseColumn" allowClose="true" allowDrag="true" layout="vertical" visible="false" close="chooseColumn.visible=false">
+		<flexlib:FlowContainer id="flowContainer" width="450" height="150" />
+		<mx:Button label="设置" click="setStStbprpBColumn(null)"/>
+	</vistech:SuperPanel>
+	<vistech:SuperPanel title="设置查询条件" width="850" height="400" id="searchCondtionsWin" allowClose="true" allowDrag="true" layout="vertical" visible="false" close="searchCondtionsWin.visible=false">
+		<vistech:ST_STBPRP_B_search clickSearchBut="setSearchConditions()" id="searchConditionBox" />
+	</vistech:SuperPanel>
+	
+</mx:Canvas>

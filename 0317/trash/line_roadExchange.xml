@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<StyledLayerDescriptor xmlns:sld="http://www.opengis.net/sld" xmlns:ogc="http://www.opengis.net/ogc" xmlns:gml="http://www.opengis.net/gml" version="1.0.0"> 
+	<UserLayer> 
+		<UserStyle> 
+			<Name>line_roadExchange</Name> 
+ 
+			<FeatureTypeStyle> 
+				<Rule>
+                    <Name>role08</Name>
+                    <Title>highway</Title>
+                    <Abstract>Abstract</Abstract>
+                    <MinScaleDenominator>12715</MinScaleDenominator>
+					<MaxScaleDenominator>25430</MaxScaleDenominator>
+                    <LineSymbolizer>
+                        <Stroke>
+                            <CssParameter name="stroke">
+                                <ogc:Literal>#FFF0C0</ogc:Literal>
+                            </CssParameter>                           
+                            <CssParameter name="stroke-width">
+                                <ogc:Literal>2.5</ogc:Literal>
+                            </CssParameter>
+                        </Stroke>
+                    </LineSymbolizer>
+                    <LineSymbolizer>
+                        <Stroke>
+                            <CssParameter name="stroke">
+                                <ogc:Literal>#FFFEC5</ogc:Literal>
+                            </CssParameter>                           
+                            <CssParameter name="stroke-width">
+                                <ogc:Literal>1.5</ogc:Literal>
+                            </CssParameter>
+                        </Stroke>
+                    </LineSymbolizer>
+                </Rule>
+				<Rule>
+                    <Name>role09</Name>
+                    <Title>highway</Title>
+                    <Abstract>Abstract</Abstract>
+                    <MinScaleDenominator>6357</MinScaleDenominator>
+					<MaxScaleDenominator>12715</MaxScaleDenominator>
+                    <LineSymbolizer>
+                        <Stroke>
+                            <CssParameter name="stroke">
+                                <ogc:Literal>#FFF0C0</ogc:Literal>
+                            </CssParameter>                           
+                            <CssParameter name="stroke-width">
+                                <ogc:Literal>3.0</ogc:Literal>
+                            </CssParameter>
+                        </Stroke>
+                    </LineSymbolizer>
+                    <LineSymbolizer>
+                        <Stroke>
+                            <CssParameter name="stroke">
+                                <ogc:Literal>#FFFEC5</ogc:Literal>
+                            </CssParameter>                           
+                            <CssParameter name="stroke-width">
+                                <ogc:Literal>2.0</ogc:Literal>
+                            </CssParameter>
+                        </Stroke>
+                    </LineSymbolizer>
+                </Rule>
+				<Rule>
+                    <Name>role10</Name>
+                    <Title>highway</Title>
+                    <Abstract>Abstract</Abstract>
+                    <MaxScaleDenominator>6357</MaxScaleDenominator>
+                    <LineSymbolizer>
+                        <Stroke>
+                            <CssParameter name="stroke">
+                                <ogc:Literal>#FFF0C0</ogc:Literal>
+                            </CssParameter>                           
+                            <CssParameter name="stroke-width">
+                                <ogc:Literal>4.5</ogc:Literal>
+                            </CssParameter>
+                        </Stroke>
+                    </LineSymbolizer>
+                    <LineSymbolizer>
+                        <Stroke>
+                            <CssParameter name="stroke">
+                                <ogc:Literal>#FFFEC5</ogc:Literal>
+                            </CssParameter>                           
+                            <CssParameter name="stroke-width">
+                                <ogc:Literal>5.5</ogc:Literal>
+                            </CssParameter>
+                        </Stroke>
+                    </LineSymbolizer>
+                </Rule>				
+			</FeatureTypeStyle>   
+		</UserStyle> 
+	</UserLayer> 
+</StyledLayerDescriptor> 

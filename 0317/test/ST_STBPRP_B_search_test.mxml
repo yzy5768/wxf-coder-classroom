@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" xmlns:maps="com.google.maps.*" >
+<mx:Script source="wxf_nnfx.as" />
+<mx:Style source="assets/css/Styles.css"/>
+
+<mx:Script>
+	<![CDATA[
+		import mx.core.UIComponent;
+		import mx.controls.Label;
+		import mx.charts.BubbleChart;
+		import com.vistech.kmlReader;
+		import mx.events.CloseEvent;
+		import com.google.maps.MapEvent;
+		import com.google.maps.LatLng;
+		import com.google.maps.MapOptions;
+		import mx.controls.Alert;
+		import mx.rpc.http.mxml.HTTPService;
+		import com.google.maps.controls.MapTypeControl;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.events.FaultEvent;
+		import com.google.maps.Map;
+		
+		/**
+		 * 地图初始化后执行
+		 * 启用鼠标滚轮控制地图缩放,添加地图图层控制器
+		 * */
+		private function onMapReady(event:Event):void{			
+			gmap.setCenter(new LatLng(22.7, 108),12);
+			gmap.enableScrollWheelZoom();
+			gmap.addControl(new MapTypeControl());
+			
+		}
+
+		private function searchStation():void{
+			wxf_searchStation(gmap);
+		}
+		
+		private function showLayerManager():void{
+			wxf_layerManager(gmap);
+		}
+	]]>
+</mx:Script>
+<maps:Map id="gmap" key="ABQIAAAA4vXKxKMBNG-5S8zXu4JJwRQFsRrcBpQDVpwlSN-IdvKrPH-c1BRRuKW0bz4L6L3YrrFdNEgK8x0tYA" 
+          width="100%" height="100%" mapevent_mapready="onMapReady(event)"/>
+<mx:Button click="searchStation()" label="站点查询" left="10" id="butSearch" />
+<mx:Button click="showLayerManager()" label="图层显示" left="150" id="butLayer" />
+</mx:Application>

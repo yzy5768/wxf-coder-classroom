@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FlowContainer xmlns="flexlib.containers.*" xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="80%">
+	<mx:Script>
+        <![CDATA[
+        	import mx.preloaders.Preloader;
+        	import mx.charts.series.LineSeries;
+        	import mx.charts.LineChart;
+        	import mx.controls.Alert;
+        	import mx.rpc.events.FaultEvent;
+        	import mx.rpc.events.ResultEvent;
+        	import mx.rpc.http.mxml.HTTPService;
+        	
+        	import mx.collections.ArrayCollection;
+        	
+        	//默认的后台文件路径,可以通过 app.php?controller=c1&action=a2调用不同数据
+			private var appURL:String = "app.php";		
+			
+			/**
+             * 设置 appURL 的路径,通过 appURL ,实现与后台通信.这样,即便主文件(swf文件)与后台文件不在一个目录下,只要通过配置文件config.xml
+             * 程序仍然可以运行
+             * 比如用户将 swf 文件下载到了本地文件夹,仍然可以实现访问
+             * config.xml 的数据,一般在 application 初始化时向后台一次性读到用户浏览器的内存中
+             * */
+            public function setAppURL(path:String):void{
+            	this.appURL = path;
+            }
+			
+			public function readChartData(stcds:String,tm_start:String,tm_end:String,particle:String){
+				cursorManager.setBusyCursor();
+				var httpservice:HTTPService = new HTTPService();
+			    httpservice.url = appURL+"?controller=st_river_r&action=chart";
+			    
+			    httpservice.method = "POST";
+				httpservice.addEventListener(ResultEvent.RESULT, function(event:ResultEvent){
+					addChartData(event.result.st_river_r);
+					cursorManager.removeBusyCursor();
+				});
+				httpservice.addEventListener(FaultEvent.FAULT, function(event:FaultEvent):void{
+					Alert.show("数据读取为空,可能是这个站最近24小时内没有实时数据上报\n也可能是与服务器的通信被中断,您再尝试一次也许可以恢复");
+					cursorManager.removeBusyCursor();
+				});			
+				var obj:Object = new Object();
+				obj.stcds = stcds;
+				obj.tm_start = tm_start;
+				obj.tm_end = tm_end;
+				obj.particle = particle;
+				httpservice.request = obj;
+				httpservice.send();
+			}
+
+			public function addChartData(data:Object):void{
+				var chart:LineChart = (getChildByName("st_river_r_chart") as LineChart);
+				if(data.stcds.stcd as ArrayCollection){
+					var lines:Array = ( data.stcds.stcd as ArrayCollection).toArray();
+				}else{
+					var lines:Array = new Array();
+					lines.push(data.stcds.stcd as Object)
+				}	
+				chart.dataProvider = data.item as ArrayCollection;
+				
+				var myLines:Array = (getChildByName("st_river_r_chart") as LineChart).series;
+				for(var i:int=0;i<lines.length;i++){
+					var line:LineSeries = new LineSeries();
+					line.yField = "NUM_"+lines[i].toString();
+					line.xField = "TM";
+					line.displayName = "水位值"+lines[i].toString();
+					myLines.push(line);
+				}
+				
+				(getChildByName("st_river_r_chart") as LineChart).series = myLines;
+			}
+			
+			
+			public function setChartDataToday():void{
+			
+			}
+			
+			]]>
+    </mx:Script>
+    
+ 
+         
+     <mx:LineChart height="100%" name="st_river_r_chart" width="60%"
+        showDataTips="true">            
+        <mx:horizontalAxis>
+            <mx:CategoryAxis categoryField="TM"/>
+        </mx:horizontalAxis>
+        <mx:series>
+        	<mx:LineSeries yField="NUM_" />
+        </mx:series>
+    </mx:LineChart>
+    <!--
+    <mx:Canvas width="40%" height="100%">
+    	<mx:Button label="今天水位" click="setChartDataToday()" />
+    	<mx:Button label="本周水位" click="setChartDataToday()" />
+    	<mx:Button label="本月水位" click="setChartDataToday()" />
+    	<mx:Button label="自定义时间段" click="setChartDataToday()" />
+    	<mx:Button label="添加线段" click="setChartDataToday()" />
+    </mx:Canvas>
+    -->
+</FlowContainer>

@@ -1,0 +1,245 @@
+<Rule>
+					<ogc:Filter>
+						<ogc:PropertyIsEqualTo>
+							<ogc:PropertyName>type</ogc:PropertyName>
+							<ogc:Literal>MM</ogc:Literal>
+						</ogc:PropertyIsEqualTo> 
+					</ogc:Filter>
+					<MaxScaleDenominator>148000</MaxScaleDenominator>
+					<PointSymbolizer>
+						<Graphic>
+						  <ExternalGraphic>
+							<OnlineResource xlink:type="simple" xlink:href="MM.png" />
+							<Format>image/png</Format>
+						  </ExternalGraphic>
+						  <Opacity>
+							<ogc:Literal>1.0</ogc:Literal>
+						  </Opacity>
+						</Graphic>
+					</PointSymbolizer>
+					<TextSymbolizer>
+						<Label>
+							<ogc:PropertyName>name</ogc:PropertyName>
+						</Label>
+						<Font>
+							<CssParameter name="font-style">Normal</CssParameter>
+							<CssParameter name="font-size">11</CssParameter>
+							<CssParameter name="font-weight">bold</CssParameter>
+						</Font>
+						<Fill>
+							<CssParameter name="fill">#000000</CssParameter>
+						</Fill>
+					</TextSymbolizer>
+				</Rule>
+				
+				
+				<Rule>
+					<ogc:Filter>
+						<ogc:PropertyIsEqualTo>
+							<ogc:PropertyName>type</ogc:PropertyName>
+							<ogc:Literal>DP</ogc:Literal>
+						</ogc:PropertyIsEqualTo> 
+					</ogc:Filter>
+					<MaxScaleDenominator>46000</MaxScaleDenominator>
+					<PointSymbolizer>
+						<Graphic>
+						  <ExternalGraphic>
+							<OnlineResource xlink:type="simple" xlink:href="DP.png" />
+							<Format>image/png</Format>
+						  </ExternalGraphic>
+						  <Opacity>
+							<ogc:Literal>1.0</ogc:Literal>
+						  </Opacity>
+						</Graphic>
+					</PointSymbolizer>
+					<TextSymbolizer>
+						<Label>
+							<ogc:PropertyName>name</ogc:PropertyName>
+						</Label>
+						<Font>
+							<CssParameter name="font-style">Normal</CssParameter>
+							<CssParameter name="font-size">11</CssParameter>
+							<CssParameter name="font-weight">bold</CssParameter>
+						</Font>
+						<Fill>
+							<CssParameter name="fill">#000000</CssParameter>
+						</Fill>
+					</TextSymbolizer>
+				</Rule>
+				<Rule>
+					<ogc:Filter>
+						<ogc:PropertyIsEqualTo>
+							<ogc:PropertyName>type</ogc:PropertyName>
+							<ogc:Literal>VD</ogc:Literal>
+						</ogc:PropertyIsEqualTo> 
+					</ogc:Filter>
+					<MaxScaleDenominator>46000</MaxScaleDenominator>
+					<PointSymbolizer>
+						<Graphic>
+						  <ExternalGraphic>
+							<OnlineResource xlink:type="simple" xlink:href="VD.png" />
+							<Format>image/png</Format>
+						  </ExternalGraphic>
+						  <Opacity>
+							<ogc:Literal>1.0</ogc:Literal>
+						  </Opacity>
+						</Graphic>
+					</PointSymbolizer>
+					<TextSymbolizer>
+						<Label>
+							<ogc:PropertyName>name</ogc:PropertyName>
+						</Label>
+						<Font>
+							<CssParameter name="font-style">Normal</CssParameter>
+							<CssParameter name="font-size">11</CssParameter>
+							<CssParameter name="font-weight">bold</CssParameter>
+						</Font>
+						<Fill>
+							<CssParameter name="fill">#000000</CssParameter>
+						</Fill>
+					</TextSymbolizer>
+				</Rule>
+				<Rule>
+					<ogc:Filter>
+						<ogc:PropertyIsEqualTo>
+							<ogc:PropertyName>type</ogc:PropertyName>
+							<ogc:Literal>R1</ogc:Literal>
+						</ogc:PropertyIsEqualTo> 
+					</ogc:Filter>
+					<MaxScaleDenominator>1000000</MaxScaleDenominator>
+					<PointSymbolizer>
+						<Graphic>
+						  <ExternalGraphic>
+							<OnlineResource xlink:type="simple" xlink:href="RR.png" />
+							<Format>image/png</Format>
+						  </ExternalGraphic>
+						  <Opacity>
+							<ogc:Literal>1.0</ogc:Literal>
+						  </Opacity>
+							<Size>
+								<ogc:Literal>12</ogc:Literal>
+							</Size>
+						</Graphic>
+					</PointSymbolizer>
+					<TextSymbolizer>
+						<Label>
+							<ogc:PropertyName>name</ogc:PropertyName>
+						</Label>
+						<Font>
+							<CssParameter name="font-style">Normal</CssParameter>
+							<CssParameter name="font-size">11</CssParameter>
+							<CssParameter name="font-weight">bold</CssParameter>
+						</Font>
+						<Fill>
+							<CssParameter name="fill">#000000</CssParameter>
+						</Fill>
+					</TextSymbolizer>
+				</Rule>
+				<Rule>
+					<ogc:Filter>
+						<ogc:PropertyIsEqualTo>
+							<ogc:PropertyName>type</ogc:PropertyName>
+							<ogc:Literal>R2</ogc:Literal>
+						</ogc:PropertyIsEqualTo> 
+					</ogc:Filter>
+					<MaxScaleDenominator>296000</MaxScaleDenominator>
+					<PointSymbolizer>
+						<Graphic>
+						  <ExternalGraphic>
+							<OnlineResource xlink:type="simple" xlink:href="RR.png" />
+							<Format>image/png</Format>
+						  </ExternalGraphic>
+						  <Opacity>
+							<ogc:Literal>1.0</ogc:Literal>
+						  </Opacity>
+						  <Size>
+								<ogc:Literal>10</ogc:Literal>
+							</Size>
+						</Graphic>
+					</PointSymbolizer>
+					<TextSymbolizer>
+						<Label>
+							<ogc:PropertyName>name</ogc:PropertyName>
+						</Label>
+						<Font>
+							<CssParameter name="font-style">Normal</CssParameter>
+							<CssParameter name="font-size">11</CssParameter>
+							<CssParameter name="font-weight">bold</CssParameter>
+						</Font>
+						<Fill>
+							<CssParameter name="fill">#000000</CssParameter>
+						</Fill>
+					</TextSymbolizer>
+				</Rule>
+				<Rule>
+					<ogc:Filter>
+						<ogc:PropertyIsEqualTo>
+							<ogc:PropertyName>type</ogc:PropertyName>
+							<ogc:Literal>R3</ogc:Literal>
+						</ogc:PropertyIsEqualTo> 
+					</ogc:Filter>
+					<MaxScaleDenominator>148000</MaxScaleDenominator>
+					<PointSymbolizer>
+						<Graphic>
+						  <ExternalGraphic>
+							<OnlineResource xlink:type="simple" xlink:href="RR.png" />
+							<Format>image/png</Format>
+						  </ExternalGraphic>
+						  <Opacity>
+							<ogc:Literal>1.0</ogc:Literal>
+						  </Opacity>
+						</Graphic>
+						<Size>
+								<ogc:Literal>8</ogc:Literal>
+							</Size>
+					</PointSymbolizer>
+					<TextSymbolizer>
+						<Label>
+							<ogc:PropertyName>name</ogc:PropertyName>
+						</Label>
+						<Font>
+							<CssParameter name="font-style">Normal</CssParameter>
+							<CssParameter name="font-size">11</CssParameter>
+							<CssParameter name="font-weight">bold</CssParameter>
+						</Font>
+						<Fill>
+							<CssParameter name="fill">#000000</CssParameter>
+						</Fill>
+					</TextSymbolizer>
+				</Rule>
+				<Rule>
+					<ogc:Filter>
+						<ogc:PropertyIsEqualTo>
+							<ogc:PropertyName>type</ogc:PropertyName>
+							<ogc:Literal>R4</ogc:Literal>
+						</ogc:PropertyIsEqualTo> 
+					</ogc:Filter>
+					<MaxScaleDenominator>74000</MaxScaleDenominator>
+					<PointSymbolizer>
+						<Graphic>
+						  <ExternalGraphic>
+							<OnlineResource xlink:type="simple" xlink:href="RR.png" />
+							<Format>image/png</Format>
+						  </ExternalGraphic>
+						  <Opacity>
+							<ogc:Literal>1.0</ogc:Literal>
+						  </Opacity>
+						</Graphic>
+						<Size>
+								<ogc:Literal>6</ogc:Literal>
+							</Size>
+					</PointSymbolizer>
+					<TextSymbolizer>
+						<Label>
+							<ogc:PropertyName>name</ogc:PropertyName>
+						</Label>
+						<Font>
+							<CssParameter name="font-style">Normal</CssParameter>
+							<CssParameter name="font-size">11</CssParameter>
+							<CssParameter name="font-weight">bold</CssParameter>
+						</Font>
+						<Fill>
+							<CssParameter name="fill">#000000</CssParameter>
+						</Fill>
+					</TextSymbolizer>
+				</Rule>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="146">
+<mx:Script>
+	<![CDATA[
+		import mx.controls.Button;
+		import mx.effects.AddChildAction;
+		import mx.controls.CheckBox;
+		
+		public function getCheckedItem():Array{
+			var array:Array = new Array();
+			for(var i:int = 0; i<18; i++){
+				var checkBox:CheckBox = getChildAt(i) as CheckBox;
+				if(checkBox.selected)array.push(i);
+			}
+			return array;
+		}
+		
+		public function setCheckedItem(fritm:String=""):void{
+			if(fritm==null||fritm=="")return;
+			for(var i:int = 0;i<18;i++){
+				if(fritm.substr(i,1)=="1"){
+					var checkBox:CheckBox = getChildAt(i) as CheckBox;
+					checkBox.selected = true;
+				}			
+			}
+		}		
+
+		private function butClick():void{
+			var myEventObj:Event = new Event( "saveButClick" );
+			dispatchEvent( myEventObj );
+		}
+
+	]]>
+</mx:Script>
+	<mx:CheckBox label="降水" x="2" y="2"/>
+	<mx:CheckBox label="蒸发" x="82" y="2" />
+	<mx:CheckBox label="水位" x="162" y="2" />
+	<mx:CheckBox label="流量" x="242" y="2" />
+	<mx:CheckBox label="库内水位" x="322" y="2" />
+	<mx:CheckBox label="蓄水量" x="2" y="42" />
+	<mx:CheckBox label="入库流量" x="82" y="42" />
+	<mx:CheckBox label="闸门启闭" x="162" y="42" />
+	<mx:CheckBox label="出库流量" x="242" y="42" />
+	<mx:CheckBox label="风浪" x="322" y="42" />
+	<mx:CheckBox label="泥沙" x="2" y="82" />
+	<mx:CheckBox label="冰情" x="82" y="82" />
+	<mx:CheckBox label="抽水" x="162" y="82" />
+	<mx:CheckBox label="引水" x="242" y="82" />
+	<mx:CheckBox label="排水" x="322" y="82" />
+	<mx:CheckBox label="墒情 " x="2" y="122" />
+	<mx:CheckBox label="地下水 " x="82" y="122" />
+	<mx:CheckBox label="旬月统计 " x="162" y="122" />
+	<mx:Button label="保存" x="322" y="122" click="butClick()" />
+	<mx:Metadata>
+        [Event(name="saveButClick", type="flash.events.Event")]
+    </mx:Metadata>
+</mx:Canvas>
