@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml"
+                layout="absolute"
+                xmlns:flex="main.flex.*"
+                width="100%"
+                xmlns:os="http://openscales.org"
+                height="100%"
+                xmlns:vistech="com.vistech.*" fontSize="12">
+    <mx:Style source="assets/css/Styles.css"/>
+    <mx:Canvas xmlns="*"
+               id="mainCanvas"
+               xmlns:mx="http://www.adobe.com/2006/mxml"
+               width="100%"
+               creationComplete="initMap();"
+               height="100%">
+
+
+        <os:Map id="fxmap"
+                centerLonLat="108,22"
+                height="100%"
+                width="100%">
+            <os:ScaleLine />
+            <os:WMSC name="基础地图层"
+                     id="wmsc_nnfx"
+                    url="http://58.59.136.84:8080/geoserver/gwc/service/wms"
+                     layers="nnfx_layergoup_23"
+                     format="image/png"
+                     isBaseLayer="true"
+                     tiled="true"
+                     projection="EPSG:4326"/>
+
+            <os:MousePosition x="10"
+                              y="{height-20}"
+                              displayProjection="EPSG:4326"/>
+
+            <os:LayerSwitcher/>
+
+            <os:DragHandler/>
+            <os:WheelHandler/>
+        </os:Map>
+
+        <mx:Script>
+            <![CDATA[
+            	import org.openscales.core.basetypes.LonLat;
+                import org.openscales.core.layer.Layer;
+                import mx.events.MenuEvent;
+                import com.vistech.mainMenu;
+                import com.vistech.ST_STBPRP_B_tabWindow;
+                import com.vistech.ST_STBPRP_B_form;
+                import com.vistech.LayerKML;
+                import org.openscales.core.popup.Anchored;
+                import org.openscales.core.events.FeatureEvent;
+                import com.vistech.ST_STBPRP_R_search;
+                import com.vistech.ST_STBPRP_B_search;
+                import com.vistech.SuperPanel;
+                import mx.rpc.http.mxml.HTTPService;
+                import mx.events.CloseEvent;
+                import mx.rpc.events.FaultEvent;
+                import mx.rpc.events.ResultEvent;
+                import mx.controls.Alert;
+                import mx.controls.Image;
+
+                import org.openscales.core.feature.Marker;
+                import org.openscales.core.geometry.LineString;
+                import org.openscales.core.feature.LineStringFeature;
+                import org.openscales.core.style.symbolizer.PolygonSymbolizer;
+                import org.openscales.core.geometry.Polygon;
+                import org.openscales.core.feature.PolygonFeature;
+                import org.openscales.core.geometry.LinearRing;
+                import org.openscales.core.style.stroke.Stroke;
+                import org.openscales.core.style.fill.SolidFill;
+                import org.openscales.core.style.marker.WellKnownMarker;
+                import org.openscales.core.style.symbolizer.PointSymbolizer;
+                import org.openscales.core.style.Rule;
+                import org.openscales.core.style.Style;
+                import org.openscales.core.layer.FeatureLayer;
+                import org.openscales.core.feature.Feature;
+                import org.openscales.core.Map;
+                import org.openscales.core.Trace;
+                import org.openscales.core.geometry.Point;
+                import org.openscales.core.feature.PointFeature;
+
+                private var popup:Anchored;
+
+                private var appURL:String="app.php";
+
+                [Bindable]
+                private var map:Map=null;
+                [Bindable]
+                public var displayTrace:Boolean=false;
+                [Bindable]
+                public var displayFirebugTrace:Boolean=false;
+
+               
+                private function initMap():void
+                {
+                    Trace.useFireBugConsole=displayFirebugTrace;
+                    map=fxmap.map;
+                    map.zoom=6;
+                    map.addEventListener(FeatureEvent.FEATURE_OVER, onFeatureOver);
+                    map.addEventListener(FeatureEvent.FEATURE_CLICK, onFeatureClick);
+
+                    setChildIndex(menu, getChildren().length - 1);
+                    menu.setMap(fxmap.map);
+                    menu.setAppURL(this.appURL);
+                    setChildIndex(mapZoomer, getChildren().length - 2);
+                    menu.app = this;
+                }
+
+                private function onFeatureClick(event:FeatureEvent):void
+                {
+                    if (!event.feature.data.stcd)
+                        return;
+
+                    var window:SuperPanel=new SuperPanel();
+                    window.allowClose=true;
+                    window.allowDrag=true;
+                    window.allowMinimize=true;
+                    window.allowResize=true;
+
+                    window.width=650;
+                    window.height=450;
+
+                    window.title="站点查询";
+                    window.addEventListener(CloseEvent.CLOSE, function()
+                        {
+                            removeChild(window);
+                        });
+                    var tabWindow:ST_STBPRP_B_tabWindow=new ST_STBPRP_B_tabWindow();
+                    tabWindow.setAppURL(this.appURL);
+                    tabWindow.app = this;
+                    addChild(window);
+                    window.addChild(tabWindow);
+                    tabWindow.initWindowTab(event.feature.data.stcd, event.feature.data.sttp);
+                }
+
+                /**
+                 * 给地图层增加 鼠标经过 事件:在鼠标附近弹出一个框框,显示这个站点简要的信息,比如 站点地址,名称,管理单位等等
+                 * 弹出框总是会被销毁后再产生,这可能会影响效率TODO
+                 * 这个功能是 openScales 自带的
+                 * @parma event:FeatureEvent 在event中,已经包含了这个站点要传递的信息.因为每一个pointFeature , lineFeature 都有一个data属性
+                 * */
+                private function onFeatureOver(event:FeatureEvent):void
+                {
+                    if (popup)
+                    {
+                        popup.destroy(); //TODO 弹出框每此都需要销毁后再产生,这会影响效率
+                    }
+                    popup=null;
+                    popup=new Anchored();
+                    popup.feature=event.feature;
+                    var content:String=event.feature.data.description;
+                    content="\n" + content;
+                    popup.htmlText=content;
+                    popup.size.h=80;
+                    popup.size.w=150;
+                    if (event.feature.data.description != null)
+                        map.addPopup(popup, false);
+                }
+
+               
+            ]]>
+        </mx:Script>
+
+
+    </mx:Canvas>
+    <vistech:mainMenu id="menu" />
+    <vistech:SuperPanel allowMinimize="true"
+                        allowDrag="true"
+                        width="130"
+                        height="200"
+                        id="mapZoomer"
+                        top="50"
+                        left="0"
+                        title="地图导航"
+                        horizontalAlign="center">
+
+        <os:PanComponent map="{map}"/>
+        <mx:HBox width="100%"
+                 paddingLeft="5"
+                 paddingRight="5">
+            <os:ZoomComponent map="{map}"/>
+            <mx:Spacer width="100%"/>
+
+            <os:ZoomBoxComponent map="{map}"
+                                 width="32"
+                                 height="32"/>
+        </mx:HBox>
+    </vistech:SuperPanel>
+</mx:Application>

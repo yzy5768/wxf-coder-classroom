@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   这个控件提供了对数据库表 ST_STBPRP_B 内单条数据的修改界面,
+   包括修改和新建
+ ST_STBPRP_B是测站基本属性表奥,其他遥测站如 河道水文站 水库水文站 气象站 都与这张表做一一映射
+   这个控件一般要和其他的页面修改控件结合起来,比如说被放置在一个 TAB 页面中
+   这个功能预计要与 GOOGLE MAP 结合
+ @Copyright www.vistech.com.cn
+ @author wxf
+ @version 2010-01-19
+ @see config.xml,提供后台的路径
+ @see SL323—2005,ICS 35.040,L 71,实时雨水情数据库表结构与标识符标准,介绍 ST_STBPRP_B 的由来
+ @see app.php,默认的后台路径,唯一的,可以通过 controller action 等参数调用各种功能,大多数返回的数据是 XML 格式
+-->
+<FlowContainer xmlns="flexlib.containers.*"
+               xmlns:mx="http://www.adobe.com/2006/mxml"
+               width="100%"
+               height="100%">
+    <mx:Script>
+        <![CDATA[
+        	import mx.managers.CursorManager;
+            import mx.events.CloseEvent;
+            import com.vistech.SuperPanel;
+            import mx.core.Application;
+            import mx.controls.DateField;
+            import mx.messaging.AbstractConsumer;
+            import mx.controls.ComboBox;
+            import mx.controls.ComboBase;
+            import mx.collections.ArrayCollection;
+            import mx.rpc.events.FaultEvent;
+            import mx.controls.Alert;
+            import mx.controls.TextInput;
+            import mx.containers.FormItem;
+            import mx.containers.Form;
+            import mx.rpc.AsyncToken;
+            import mx.rpc.events.ResultEvent;
+            import mx.rpc.http.HTTPService;
+
+            //默认的后台文件路径,可以通过 app.php?controller=c1&action=a2调用不同数据
+            private var appURL:String="app.php";
+
+            /**
+             * 向表单传递一个哈希表,给表单赋值并显示,并返回一个哈希表
+             *
+             * 如果在赋值过程中的任何一个元素出了错误,则取消赋值,并返回错误的键值
+             * 如果提供的键对比 ST_STBPRP_B 的属性多,可以标注,并返回多余的键值
+             * 在返回值中,有一对键值能够表示这次赋值的成果与否: isSuccess:Boolen
+             * @param data 一个哈希表,键值严格参照 ST_STBPRP_B 的数据库结构
+             * @return result 一个哈希表
+             * */
+            public function setFormValue(data:Dictionary):Dictionary
+            {
+				for (var key:String in data) {
+					if(data[key]==""||data[key]==null)continue;
+					(getChildByName(key) as TextInput).text = data[key];
+
+	 				delete data[key];
+				}
+				return data; 
+            }
+
+            /**
+             * 获得这个表单的值
+             *
+             * 会先判断表单中每个元素的合法性,如果全部合法,则只返回 {isSuccess:true}
+             * 如果有不合法的数据输入,则返回不合法的元素键值
+             * @return result 一个哈希表
+             * */
+            public function getFormValue():Dictionary
+            {            	
+                var result:Dictionary=new Dictionary();
+                for (var i:int=1; i < getChildren().length-2; i+=2)
+                {
+					result[(getChildAt(i) as TextInput).name]=(getChildAt(i) as TextInput).text;
+                }
+                result['isSuccess']=true;
+                return result; //TODO 还没有实现 键值判断 		
+            }
+
+            /**
+             * 保存表单数据,可以是 新建 和 修改 操作
+             *
+             * 根据getFormValue得到的值保存
+             * 向后台通信,通信过程中,让控件左下角的 状态 只表示为 保存中
+             * 如果通信失败:网络问题,则弹出错误框
+             * 如果通信成果,则直接返回后台返回的数据
+             * */
+            public function saveFormValue():void
+            {
+            	cursorManager.setBusyCursor();
+                var data:Dictionary=this.getFormValue();
+                delete data['isSuccess'];
+                
+                var httpservice:HTTPService=new HTTPService();
+                httpservice.url=appURL + "?controller=pumbingStation&action=save";
+                httpservice.addEventListener(ResultEvent.RESULT, function(event:ResultEvent):void
+                    {
+                    	Alert.show(event.result.toString());
+                    	cursorManager.removeBusyCursor();
+                    });
+                httpservice.addEventListener(FaultEvent.FAULT, function(event:FaultEvent):void
+                    {
+                        Alert.show("无法连接到服务器");
+                        cursorManager.removeBusyCursor();
+                    });
+                httpservice.request=data as Object;
+                httpservice.method="POST";
+                httpservice.send();
+            }
+
+            /**
+             * 从后台读取数据并显示到表单
+             *
+             * 规定: action=read 只返回一条记录
+             * */
+            public function readFormValue(stcd:String):void
+            {
+            	cursorManager.setBusyCursor();
+                var data:Dictionary=new Dictionary();
+                var httpservice:HTTPService=new HTTPService();
+                httpservice.url=appURL + "?controller=pumbingStation&action=read";
+                httpservice.addEventListener(ResultEvent.RESULT, function(event:ResultEvent):void
+                    {
+                        if (event.result.pumbingStation)
+                        {
+                            for (var key:String in(event.result.pumbingStation.valueOf()))
+                            {
+                                data[key]=event.result.pumbingStation[key];
+                            }
+                            setFormValue(data);
+                            cursorManager.removeBusyCursor();
+                        }
+                        else
+                        {
+                            Alert.show("没有数据返回");
+                            cursorManager.removeBusyCursor();
+                        }
+                    });
+                httpservice.addEventListener(FaultEvent.FAULT, function(event:FaultEvent):void
+                    {
+                        Alert.show("无法连接到服务器");
+                        cursorManager.removeBusyCursor();
+                    });
+                httpservice.request={STCD: stcd};
+                httpservice.method="POST";
+                httpservice.send();
+            }
+            
+           /**
+             * 保存表单数据,可以是 新建 和 修改 操作
+             *
+             * 根据getFormValue得到的值保存
+             * 向后台通信,通信过程中,让控件左下角的 状态 只表示为 保存中
+             * 如果通信失败:网络问题,则弹出错误框
+             * 如果通信成果,则直接返回后台返回的数据
+             * */
+            public function deleteValue():void
+            {               
+                var httpservice:HTTPService=new HTTPService();
+                httpservice.url=appURL + "?controller=pumbingStation&action=delete";
+                httpservice.addEventListener(ResultEvent.RESULT, function(event:ResultEvent):void
+                    {
+                   		Alert.show(event.result.toString());
+                    });
+                httpservice.addEventListener(FaultEvent.FAULT, function(event:FaultEvent):void
+                    {
+                        Alert.show("无法连接到服务器");
+                    });
+                httpservice.request={STCD:stcd.text};
+                httpservice.method="POST";
+                httpservice.send();
+            }
+            
+            /**
+             * 设置 appURL 的路径,通过 appURL ,实现与后台通信.这样,即便主文件(swf文件)与后台文件不在一个目录下,只要通过配置文件config.xml
+             * 程序仍然可以运行
+             * 比如用户将 swf 文件下载到了本地文件夹,仍然可以实现访问
+             * config.xml 的数据,一般在 application 初始化时向后台一次性读到用户浏览器的内存中
+             * */
+            public function setAppURL(path:String):void{
+            	this.appURL = path;
+            }
+            
+            
+            public function setOperation():void{
+            	remover.visible = true;
+            	save.visible = true;
+            }
+        ]]>
+    </mx:Script>
+<mx:Label width="100" text="编号"/><mx:TextInput width="150" name="STCD" id="stcd"/>
+<mx:Label width="100" text="名称"/><mx:TextInput width="150" name="STNM"/>
+<mx:Label width="100" text="经度"/><mx:TextInput width="150" name="Lo"/>
+<mx:Label width="100" text="纬度"/><mx:TextInput width="150" name="La"/>
+<mx:Label width="100" text="桩号"/><mx:TextInput width="150" name="PileID"/>
+<mx:Label width="100" text="起抽水位"/><mx:TextInput width="150" name="StartPumpingWaterLevle"/>
+<mx:Label width="100" text="控淹水位"/><mx:TextInput width="150" name="ControlWaterLevel"/>
+<mx:Label width="100" text="集雨面积"/><mx:TextInput width="150" name="RainCollectArea"/>
+<mx:Label width="100" text="抽排流量"/><mx:TextInput width="150" name="PumpingFlowCapability"/>
+<mx:Label width="100" text="装机容量"/><mx:TextInput width="150" name="UnitCapability"/>
+<mx:Label width="100" text="机组类型1"/><mx:TextInput width="150" name="UnitType1"/>
+<mx:Label width="100" text="机组台数1"/><mx:TextInput width="150" name="UnitCount1"/>
+<mx:Label width="100" text="当前机组运行台数1"/><mx:TextInput width="150" name="UnitRunning1"/>
+<mx:Label width="100" text="当前机组运行时间1"/><mx:TextInput width="150" name="UnitRunningHours1"/>
+<mx:Label width="100" text="机组类型2"/><mx:TextInput width="150" name="UnitType2"/>
+<mx:Label width="100" text="机组台数2"/><mx:TextInput width="150" name="UnitCount2"/>
+<mx:Label width="100" text="当前机组运行台数2"/><mx:TextInput width="150" name="UnitRunning2"/>
+<mx:Label width="100" text="当前机组运行时间2"/><mx:TextInput width="150" name="UnitRunningHours2"/>
+<mx:Label width="100" text="机组类型3"/><mx:TextInput width="150" name="UnitType3"/>
+<mx:Label width="100" text="机组台数3"/><mx:TextInput width="150" name="UnitCount3"/>
+<mx:Label width="100" text="当前机组运行台数3"/><mx:TextInput width="150" name="UnitRunning3"/>
+<mx:Label width="100" text="当前机组运行时间3"/><mx:TextInput width="150" name="UnitRunningHours3"/>
+<mx:Label width="100" text="当前泵站流量"/><mx:TextInput width="150" name="PumpingFlow"/>
+<mx:Label width="100" text="当前淹没面积"/><mx:TextInput width="150" name="SubmergeArea"/>
+<mx:Label width="100" text="当前淹没区水量"/><mx:TextInput width="150" name="SubmergeWater"/>
+<mx:Label width="100" text="当前内江水位"/><mx:TextInput width="150" name="InnerWaterLevel"/>
+<mx:Label width="100" text="当前距结束时间"/><mx:TextInput width="150" name="OverTimeNeeded"/>
+<mx:Label width="100" text="备注"/><mx:TextInput width="150" name="memo"/>
+<mx:Label width="100" text="是否在抽水"/><mx:TextInput width="150" name="isDischarge"/>
+
+<mx:Button label="保存" width="100" id="save" visible="false" click="saveFormValue();" />
+<mx:Button label="删除" width="100" id="remover" visible="false" click="deleteValue();" />
+</FlowContainer>

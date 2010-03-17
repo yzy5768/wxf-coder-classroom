@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vistech>
+	<database>
+		<server>58.59.136.84</server>
+		<username>sa</username>
+		<password>livemate_111111</password>
+		<dbname>RWDBNN</dbname>
+	</database>
+	<appURL>http://localhost:8003/app.php</appURL>
+	<wms>http://localhost:8080/geoserver/wms</wms>
+	<wmslayer>nnfx_layergroup_shp</wmslayer>
+	<gmapKey>ABQIAAAA7QUChpcnvnmXxsjC7s1fCxQGj0PqsCtxKvarsoS-iqLdqZSKfxTd7Xf-2rEc_PC9o8IsJde80Wnj4g</gmapKey>
+	<kmlLayers explain="为县界 堤防 桥梁 等线条数据提供显示">
+		<layer name="桥梁" path="kmlData/BRIDGE.XML" />
+		<layer name="左岸堤防" path="kmlData/LINE_LEFT.XML" />
+		<layer name="右岸堤防" path="kmlData/LINE_RIGHT.XML" />
+	</kmlLayers>
+	<dataProvider explain="为各种下拉框,树状菜单提供数据">
+		<ADDVCD explain="行政区划">
+			<item label="南宁市" data="450100"/>
+			<item label="市辖区" data="450101"/>
+			<item label="兴宁区" data="450102"/>
+			<item label="青秀区" data="450103"/>
+			<item label="江南区" data="450105"/>
+			<item label="西乡塘区" data="450107"/>
+			<item label="良庆区" data="450108"/>
+			<item label="邕宁区" data="450109"/>
+			<item label="武鸣县" data="450122"/>
+			<item label="隆安县" data="450123"/>
+			<item label="马山县" data="450124"/>
+			<item label="上林县" data="450125"/>
+			<item label="宾阳县" data="450126"/>
+			<item label="横县" data="450127"/>
+		</ADDVCD>
+		<STTP>
+			<item label="气象站" data="MM" />
+			<item label="雨量站" data="PP" />
+			<item label="河道水位水文站" data="ZZ" />
+			<item label="水库水文站" data="RR" />
+			<item label="泵站" data="DP" />
+			<item label="视频站" data="VD" />
+		</STTP>
+		<FRGRD>
+			<item label="中央级别" data="1" /> 
+			<item label="省级别" data="2" /> 
+			<item label="市级别" data="3" />
+			<item label="县级别" data="4" />
+			<item label="镇级别" data="5" />
+		</FRGRD>
+		<STBK>
+			<item label="左岸" data="0" /> 
+			<item label="右岸" data="1" /> 
+			<item label="不在河流附近" data="" />
+		</STBK>
+		<BSNM>
+			<item label="珠江" data="珠江" /> 
+			<item label="长江" data="长江" /> 
+			<item label="黄河" data="黄河" /> 
+		</BSNM>
+		<HNNM>
+			<item label="邕江" data="邕江" /> 
+			<item label="左江" data="左江" /> 
+			<item label="右江" data="右江" /> 
+		</HNNM>
+		<RVNM>
+			<item label="凤凰江" data="凤凰江" /> 
+			<item label="武鸣河" data="武鸣河" /> 
+			<item label="可利江" data="可利江" /> 
+		</RVNM>		
+		<RVNM>
+			<item label="凤凰江" data="凤凰江" /> 
+			<item label="武鸣河" data="武鸣河" /> 
+			<item label="可利江" data="可利江" /> 
+		</RVNM>	
+		<district explain="这个是专门为district这个字段设计的,这是不正常的字段,是南宁项目过于复杂导致的.在以后的设计中,地区的查询要按照ADDVCD查询,即国标GB2260">
+			<item label="横县" data="横县"/> 
+			<item label="西乡塘区" data="西乡塘区"/> 
+			<item label="马山县" data="马山县"/> 
+			<item label="隆安县" data="隆安县"/> 
+			<item label="良庆区" data="良庆区"/> 
+			<item label="广西省" data="广西省"/> 
+			<item label="武鸣县" data="武鸣县"/> 
+			<item label="兴宁区" data="兴宁区"/> 
+			<item label="青秀区" data="青秀区"/> 
+			<item label="江南区" data="江南区"/> 
+			<item label="邕宁区" data="邕宁区"/> 
+			<item label="市直属" data="市直属"/> 
+			<item label="上林县" data="上林县"/> 
+			<item label="宾阳县 " data="宾阳县"/> 
+		</district>		
+		<ST_STBPRP_R explain="能够提供的各种实时数据,与ST_STBPRP_B标中的STTP字段不对应">
+			<item label="降雨量" data="降雨量"/> 
+			<item label="水库水位" data="水库水位"/> 
+			<item label="河道水位" data="河道水位"/> 
+		</ST_STBPRP_R>				
+	</dataProvider>
+</vistech>

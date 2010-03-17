@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" xmlns:vistech="com.vistech.*" initialize="init()">
+<mx:Script>
+	<![CDATA[
+		import mx.controls.Alert;
+	function init():void{
+		Alert.show("asdf");
+		test.setAppURL("http://localhost:8001/app/app.php");
+		test.initWindowTab("2017","RR");
+		
+	}		
+	
+	function save():void{
+		//test.saveFormValue();
+	}
+	]]>
+</mx:Script>
+
+	<vistech:ST_STBPRP_B_tabWindow width="100%" height="90%" id="test" />
+
+	<mx:Button click="save()" left="10" bottom="10" />
+</mx:Application>

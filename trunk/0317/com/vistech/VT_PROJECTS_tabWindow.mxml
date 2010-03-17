@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     根据站点类型,弹出一个 tab 窗口
+     如果是 河道水文站, 弹出 这个测站的基础信息 , 河道信息, 24小时内河道水位线,测站附近照片集
+     如果是视频站 ,弹出这个测站的基础信息 , 实时视屏
+     如果是水库水文站 , 弹出测站的基础信息, 24小时内水库水位线, 水库基础信息,水库照片集,水库值班表
+     如果是泵站,弹出 测站的基础信息,7天内的泵站启闭记录,泵站的基础信息
+     如果是雨量站 ,弹出这个站点的基础信息, 24小时雨量过程线
+     如果是气象站 ,弹出这个站点的基础信息, 24小时温度过程线,24小时风力过程线
+
+     任何一种站点,都可以弹出这个站点的 测站基础信息
+-->
+<mx:TabNavigator xmlns="flexlib.containers.*"
+                 xmlns:mx="http://www.adobe.com/2006/mxml"
+                 width="100%"
+                 height="100%"
+                 xmlns:code="http://code.google.com/p/flexlib/"
+                 xmlns:vistech="com.vistech.*">
+    <mx:Script>
+		<![CDATA[
+		
+			public var appURL:String = "app.php";
+		
+            /**
+             * 核心函数,由于 flex mxml 中无法设置构造函数,特此将构造过程写成专门的一个PUBLIC函数处理
+             * @parma stcd 站点编号,凡是与 站点基础信息表(sl323 中的 ST_STBPRP_B 表)一一对应的表,都用这个字段做主键,当然,字段名可能不一样
+             * @parma sttp 站点类型,可以是 RR ZZ VD DP MM PP 中的一种,根据站点类型的不同,决定要添加哪种 tab 窗口
+             * */
+            public function initWindowTab(stcd:String, sttp:String):void
+            {
+            	switch(sttp){        	            	
+	                case "HYDRO_RR":
+	                { //水库站
+	                    var vt_prpjects_res:VT_PROJECTS_RES_from=new VT_PROJECTS_RES_from();
+	                    vt_prpjects_res.label="水库基本信息";
+	                    addChild(vt_prpjects_res);
+	                    vt_prpjects_res.setAppURL(this.appURL);
+	                    vt_prpjects_res.readFormValue(stcd);
+	                    break;
+	                }
+	                case "HYDRO_RIVER":
+	                { //水库站
+	                    var vt_prpjects_river:VT_PROJECTS_RIVER_from =new VT_PROJECTS_RIVER_from();
+	                    vt_prpjects_river.label="河流基本信息";
+	                    addChild(vt_prpjects_river);
+	                    vt_prpjects_river.setAppURL(this.appURL);
+	                    vt_prpjects_river.readFormValue(stcd);
+	                    break;
+	                }	   
+	                case "HYDRO_DP":
+	                { //水库站
+	                    var vt_prpjects_dp:pumbingStation_form =new pumbingStation_form();
+	                    vt_prpjects_dp.label="泵站基本信息";
+	                    addChild(vt_prpjects_dp);
+	                    vt_prpjects_dp.setAppURL(this.appURL);
+	                    vt_prpjects_dp.readFormValue(stcd);
+	                    vt_prpjects_dp.setOperation();
+	                    break;
+	                }
+	                case "HYDRO_DIKE":
+	                { //水库站
+	                    var vt_prpjects_dike:VT_PROJECTS_DIKE_from =new VT_PROJECTS_DIKE_from();
+	                    vt_prpjects_dike.label="堤防基本信息";
+	                    addChild(vt_prpjects_dike);
+	                    vt_prpjects_dike.setAppURL(this.appURL);
+	                    vt_prpjects_dike.readFormValue(stcd);
+	                    //vt_prpjects_dike.setOperation();
+	                    break;
+	                }	                
+	                default:break;
+                }
+            }
+		]]>
+    </mx:Script>
+</mx:TabNavigator>

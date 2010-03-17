@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--南宁防汛应急决策支持指挥系统,前台核心文件
+  * 需要导入 街道图 和 卫星图(如果用户能上外网)
+  * @copyright www.vistech.com.cn 杭州旅行者科技有限公司
+  * @author wxf.livemate@gmail.com
+  * @version 2010-03-07
+  -->
+<mx:Application xmlns="*" xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" xmlns:vistech="com.vistech.*" xmlns:os="http://openscales.org">
+	<mx:Style source="assets/css/Styles.css"/>
+	<mx:Script>
+		<![CDATA[
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas creationComplete="initMap();" width="100%" height="100%">
+	    <os:Map id="fxmap" width="100%" height="100%"  >
+	    
+	       <!--添加一个本地的gwc地图服务.gwc是在安装 geoServer 2.0.1 时自动安装的.如果操作系统为 windows xp ,部分 gwc 服务会不稳定
+	         * 所有添加的地图都可以被mapSwitcher识别到
+	         * resolutions 的比例系数是从 geoWebCache 发布的 openLayers demo 的源代码中复制过来的.如果这个没有和gwc服务的比例系数相对应,地图会出不来.
+	         * 如果你用的是 WMSC 服务而不是 gwc 服务的话,则不用考虑 比例系数 对应问题
+	         * EPSG:4326 是一种经纬度换算标准.一般而言,中国大陆流行的 经纬度换算标准与国际标准不同
+	         * openScales 默认的地图放大倍数为 16 层,最大放大尺度为  1:20000 .通过设置 resolutiosn ,可以自由设置地图的放大层次
+	         * 必须设置 format. 因为gwc 服务对 image/png24 的支持最好. image/png 就是 image/png24 .
+	         * 如果想降低服务器的'地图缓存硬盘开销',可以把 fomat 换成 image/png8,这样地图的画质会差一点,但硬盘开销会小很多,当然网络开销也会小很多 
+	         -->
+	       <os:WMSC name="南宁防汛底图" isBaseLayer="true" 
+	       		url="http://58.59.136.84:8080/geoserver/gwc/service/wms"
+	        	layers="NNFX"
+	        	format="image/png"
+	        	projection="EPSG:4326"
+	        	resolutions="0.703125, 0.3515625, 0.17578125, 0.087890625, 0.0439453125, 0.02197265625, 0.010986328125, 0.0054931640625, 0.00274658203125, 0.001373291015625, 6.866455078125E-4, 3.4332275390625E-4, 1.71661376953125E-4, 8.58306884765625E-5, 4.291534423828125E-5, 2.1457672119140625E-5, 1.0728836059570312E-5, 5.364418029785156E-6, 2.682209014892578E-6, 1.341104507446289E-6, 6.705522537231445E-7, 3.3527612686157227E-7, 1.6763806343078613E-7, 8.381903171539307E-8, 4.190951585769653E-8, 2.0954757928848267E-8, 1.0477378964424133E-8, 5.238689482212067E-9, 2.6193447411060333E-9, 1.3096723705530167E-9, 6.548361852765083E-10"
+	        	/>
+	        	
+	        <!--这是从openScales的官网连接的卫星地图,这个地图的gwc服务是无法被其他gwc盗取的.
+	          * 如果我们想搭建属于自己的卫星地图,可以用 Univrsal Maps Downloader 5.7 盗取YAHOO的卫星图
+	          * 然后用 geoServer 发布一个 wordImage 栅格图层
+	          * 在 windows xp 下,geoServer的 栅格图层WMSC服务是不稳定的,但 WMS 服务是稳定的
+	          * 如果想得到 瓦片式卫星图 ,只能用 gwc 服务调用 卫星图的 WMS 服务
+	          -->
+	        <os:WMSC name="Nasa 卫星地图"
+	                 url="http://openscales.org/geoserver/gwc/service/wms"
+	                 layers="bluemarble"
+	                 isBaseLayer="true"/>
+	                 
+	        <!--添加鼠标滚轮事件,这个鼠标滚轮与googlemap的滚轮不一样,
+	          * google的滚轮可以在鼠标位置放大地图,而openScales只能在地图中心放大缩小
+	          * 在openScales的后继版本中会仿照GOOGLE开发此功能
+	          * ERSI公司的 flex 地图系列中,已经提供了此功能.当然,ERSI他们绝对不会将源码开方
+	          -->
+	        <os:WheelHandler/>
+	        
+	        <!--当地图处于'导入'过程中,在地图的右下角显示一个图标-->
+	        <os:Spinner id="spinner" x="{width-20}" y="{height-20}"/>    
+	        
+	        <!--跟踪鼠标所在经纬度-->
+	        <os:MousePosition x="10" y="{height-20}" displayProjection="EPSG:4326"/>
+	        <!--地图比例尺-->
+	        <os:ScaleLine x="{width-100-10}" y="{height-80}" />
+	        
+	        <os:LayerSwitcher />
+	        
+	        <!--鼠标拖曳地图-->
+	        <os:DragHandler />  
+	    </os:Map>
+	    	    
+	    <mx:Script>
+	        <![CDATA[
+	        	import com.vistech.VT_PROJECTS_tabWindow;
+	        	import mx.events.CloseEvent;
+	        	import com.vistech.SuperPanel;
+	        	import com.vistech.ST_STBPRP_B_tabWindow;
+	        	import org.openscales.core.events.FeatureEvent;
+	        	import org.openscales.core.popup.Anchored;
+	        	import com.vistech.LayerXMLData;
+	        	import mx.controls.Alert;
+	        	import org.openscales.core.feature.PointFeature;
+	        	import org.openscales.core.layer.FeatureLayer;
+	        	import org.openscales.core.basetypes.LonLat;
+	            import org.openscales.core.Map;
+	            import org.openscales.core.Trace;
+	            
+	            [Bindable] private var map:Map = null;
+	            
+	           
+	
+	            private function initMap():void {
+	                map=fxmap.map;
+	                map.zoom = 10;
+	                //必须在这里设置地图的中心.如果在 <os:Map 标签中设置地图中心,会导致 绘图工具 失效
+	                map.setCenter(new LonLat(108.26917,22.82535));
+	                
+	                menu.setMap(map);
+	             	map.addEventListener(FeatureEvent.FEATURE_OVER, onFeatureOver);
+                    map.addEventListener(FeatureEvent.FEATURE_OUT, onFeatureOut);
+                    map.addEventListener(FeatureEvent.FEATURE_CLICK, onFeatureClick);
+                   
+             	}
+             	
+             	private var popup:Anchored;
+                /**
+                 * 提供热点功能:鼠标经过,弹出一个这个点信息的简要说明,鼠标点击,则弹出一个框介绍这个点的详细信息
+                 * */
+                private function onFeatureOver(event:FeatureEvent):void
+                {
+                    if (popup)
+                    {
+                        popup.destroy();
+                    }
+                    popup=null;
+                    popup=new Anchored();
+                    popup.alpha = 0.5;
+                    popup.feature=event.feature;
+                    var content:String=event.feature.data.description;
+                    popup.size.h=250;
+                    popup.size.w=200;
+                    if(event.feature.data.description!=null)map.addPopup(popup, false);
+                }   
+                             
+                private function onFeatureOut(event:FeatureEvent):void
+                {
+                    if (popup)
+                    {
+                        popup.destroy();
+                    }
+                }
+                
+                public function onFeatureClick(event:FeatureEvent):void
+                {				
+					var window:SuperPanel=new SuperPanel();
+					window.allowClose=true;
+					window.allowDrag=true;
+					window.allowMinimize=true;
+					window.allowResize = true;
+					window.width=550;
+					window.height=600;
+					window.title="工情信息";
+                    window.addEventListener(CloseEvent.CLOSE, function()
+                        {
+                           removeChild(window);
+                        });
+                    addChild(window);
+                    
+                    //如果是实时数据类别
+                	if((event.feature.data as Object).type=="RR"||
+                		(event.feature.data as Object).type=="ZZ"||
+                		(event.feature.data as Object).type=="MM"||
+                		(event.feature.data as Object).type=="PP"
+                		){
+						var tab:ST_STBPRP_B_tabWindow = new ST_STBPRP_B_tabWindow();
+	                	tab.initWindowTab((event.feature.data as Object).id.toString(),(event.feature.data as Object).type);
+						window.addChild(tab);
+                	}
+                	//如果是工情类别
+                	if((event.feature.data as Object).type=="HYDRO_RR"||
+                		(event.feature.data as Object).type=="HYDRO_RIVER"||
+                		(event.feature.data as Object).type=="HYDRO_DIKE"||
+                		(event.feature.data as Object).type=="HYDRO_DP"
+                	){
+	                	var tab2:VT_PROJECTS_tabWindow = new VT_PROJECTS_tabWindow();	                	
+	                	tab2.initWindowTab((event.feature.data as Object).id.toString(),(event.feature.data as Object).type);
+	                	window.addChild(tab2);
+                	}
+                	
+                }  
+	        ]]>
+	    </mx:Script>
+
+</mx:Canvas>
+
+
+	<vistech:mainMenu id="menu" width="300" x="10" y="10" height="95%" alpha="0.4" mouseOut="menu.alpha=0.4" mouseOver="menu.alpha=0.9" />                         
+</mx:Application>

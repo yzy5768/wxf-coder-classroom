@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     这个控件提供了对数据库表 ST_STBPRP_B 内单条数据的修改界面,
+     包括修改和新建
+     ST_STBPRP_B是测站基本属性表奥,其他遥测站如 河道水文站 水库水文站 气象站 都与这张表做一一映射
+     这个控件一般要和其他的页面修改控件结合起来,比如说被放置在一个 TAB 页面中
+     这个功能预计要与 GOOGLE MAP 结合
+     @Copyright www.vistech.com.cn
+     @author wxf
+     @version 2010-01-19
+     @see config.xml,提供后台的路径
+     @see SL323—2005,ICS 35.040,L 71,实时雨水情数据库表结构与标识符标准,介绍 ST_STBPRP_B 的由来
+     @see app.php,默认的后台路径,唯一的,可以通过 controller action 等参数调用各种功能,大多数返回的数据是 XML 格式
+-->
+<FlowContainer xmlns="flexlib.containers.*"
+               xmlns:mx="http://www.adobe.com/2006/mxml"
+               width="100%"
+               height="100%">
+    <mx:Script>
+        <![CDATA[
+            import mx.events.CloseEvent;
+            import com.vistech.SuperPanel;
+            import mx.core.Application;
+            import mx.controls.DateField;
+            import mx.messaging.AbstractConsumer;
+            import mx.controls.ComboBox;
+            import mx.controls.ComboBase;
+            import mx.collections.ArrayCollection;
+            import mx.rpc.events.FaultEvent;
+            import mx.controls.Alert;
+            import mx.controls.TextInput;
+            import mx.containers.FormItem;
+            import mx.containers.Form;
+            import mx.rpc.AsyncToken;
+            import mx.rpc.events.ResultEvent;
+            import mx.rpc.http.HTTPService;
+
+            //默认的后台文件路径,可以通过 app.php?controller=c1&action=a2调用不同数据
+            private var appURL:String="app.php";
+
+            public var RVNM:ArrayCollection=new ArrayCollection([{label: "灵奇河", data: "灵奇河"}, {label: "MasterCard", data: 2}, {label: "American Express", data: 3}]);
+
+            public var HNNM:ArrayCollection=new ArrayCollection([{label: "西江", data: "西江"}, {label: "MasterCard", data: 2}, {label: "American Express", data: 3}]);
+
+            public var STTP:ArrayCollection=new ArrayCollection([{label: "气象站", data: "MM"}, {label: "蒸发站", data: "BB"}, {label: "堰闸水文站", data: "DD"}, {label: "潮位站", data: "TT"}, {label: "雨量站", data: "PP"}, {label: "河道水位水文站", data: "ZZ"}, {label: "水库水文站", data: "RR"}, {label: "地下水站", data: "ZG"}, {label: "泵站", data: "DP"}, {label: "墒情站", data: "SS"}, {label: "分洪水位站", data: "ZB"}]);
+
+            public var FRGRD:ArrayCollection=new ArrayCollection([{label: "中央报汛站", data: "1"}, {label: "省水文局", data: "2"}, {label: "市水文局", data: "3"}]);
+
+            public var STBK:ArrayCollection=new ArrayCollection([{label: "左岸", data: "0"}, {label: "右岸", data: "1"}, {label: "不在河流附近", data: ""}]);
+
+            public var BSNM:ArrayCollection=new ArrayCollection([{label: "珠江", data: "珠江"}, {label: "右岸", data: "1"}, {label: "不在河流附近", data: ""}]);
+
+			public var app:Application = null;
+
+            /**
+             * 向表单传递一个哈希表,给表单赋值并显示,并返回一个哈希表
+             *
+             * 如果在赋值过程中的任何一个元素出了错误,则取消赋值,并返回错误的键值
+             * 如果提供的键对比 ST_STBPRP_B 的属性多,可以标注,并返回多余的键值
+             * 在返回值中,有一对键值能够表示这次赋值的成果与否: isSuccess:Boolen
+             * @param data 一个哈希表,键值严格参照 ST_STBPRP_B 的数据库结构
+             * @return result 一个哈希表
+             * */
+            public function setFormValue(data:Dictionary):Dictionary
+            {
+                var comboBoxData:Dictionary=new Dictionary();
+                comboBoxData['RVNM']=this.RVNM;
+                comboBoxData['HNNM']=this.HNNM;
+                comboBoxData['STTP']=this.STTP;
+                comboBoxData['FRGRD']=this.FRGRD;
+                comboBoxData['STBK']=this.STBK;
+                comboBoxData['BSNM']=this.BSNM;
+                for (var key:String in data)
+                {
+                    if (data[key] == "" || data[key] == null)
+                        continue;
+                    if (getChildByName(key) as TextInput)
+                    {
+                        (getChildByName(key) as TextInput).text=data[key];
+                    }
+                    else if (getChildByName(key) as ComboBox)
+                    {
+                        (getChildByName(key) as ComboBox).text=data[key];
+                        var comboboxItem:ArrayCollection=comboBoxData[key];
+                        for (var i:int=0; i < comboboxItem.length; i++)
+                        {
+                            if (comboboxItem[i].data == data[key])
+                            {
+                                (getChildByName(key) as ComboBox).text=comboboxItem[i].label;
+                            }
+                        }
+                    }
+                    else if (getChildByName(key) as DateField)
+                    {
+                        (getChildByName(key) as DateField).text=data[key];
+                    }
+                    delete data[key];
+                }
+                var result:Dictionary=new Dictionary();
+                result['isSuccess']=true;
+                return result; //TODO 还没有实现 键值判断 		
+            }
+
+            /**
+             * 获得这个表单的值
+             *
+             * 会先判断表单中每个元素的合法性,如果全部合法,则只返回 {isSuccess:true}
+             * 如果有不合法的数据输入,则返回不合法的元素键值
+             * @return result 一个哈希表
+             * */
+            public function getFormValue():Dictionary
+            {
+                var result:Dictionary=new Dictionary();
+                for (var i:int=1; i < getChildren().length; i+=2)
+                {
+                    if (getChildAt(i) as TextInput)
+                    {
+                        result[(getChildAt(i) as TextInput).name]=(getChildAt(i) as TextInput).text;
+                    }
+                    else if (getChildAt(i) as ComboBox)
+                    {
+                        result[(getChildAt(i) as ComboBox).name]=(getChildAt(i) as ComboBox).value;
+                    }
+                    else if (getChildAt(i) as DateField)
+                    {
+                        result[(getChildAt(i) as DateField).name]=(getChildAt(i) as DateField).text;
+                    }
+                }
+                result['isSuccess']=true;
+                return result; //TODO 还没有实现 键值判断 		
+            }
+
+            /**
+             * 保存表单数据,可以是 新建 和 修改 操作
+             *
+             * 根据getFormValue得到的值保存
+             * 向后台通信,通信过程中,让控件左下角的 状态 只表示为 保存中
+             * 如果通信失败:网络问题,则弹出错误框
+             * 如果通信成果,则直接返回后台返回的数据
+             * */
+            public function saveFormValue():void
+            {
+                var data:Dictionary=this.getFormValue();
+                delete data['isSuccess'];
+                var httpservice:HTTPService=new HTTPService();
+                httpservice.url=appURL + "?controller=st_stbprp_b&action=save";
+                httpservice.addEventListener(ResultEvent.RESULT, function(event:ResultEvent):void
+                    {
+                    //TODO 直接输出后台返回值
+                    });
+                httpservice.addEventListener(FaultEvent.FAULT, function(event:FaultEvent):void
+                    {
+                        Alert.show("无法连接到服务器");
+                    });
+                httpservice.request=data as Object;
+                httpservice.method="POST";
+                httpservice.send();
+            }
+
+            /**
+             * 从后台读取数据并显示到表单
+             *
+             * 规定: action=read 只返回一条记录
+             * */
+            public function readFormValue(stcd:String):void
+            {
+            	
+                var data:Dictionary=new Dictionary();
+                var httpservice:HTTPService=new HTTPService();
+                httpservice.url=appURL + "?controller=st_stbprp_b&action=read";
+                httpservice.addEventListener(ResultEvent.RESULT, function(event:ResultEvent):void
+                    {
+                        if (event.result.read_st_stbprp_b)
+                        {
+                            for (var key:String in(event.result.read_st_stbprp_b.valueOf()))
+                            {
+                                data[key]=event.result.read_st_stbprp_b[key];
+                            }
+                            setFormValue(data);
+                        }
+                        else
+                        {
+                            Alert.show("没有数据返回");
+                        }
+                    });
+                httpservice.addEventListener(FaultEvent.FAULT, function(event:FaultEvent):void
+                    {
+                        Alert.show("无法连接到服务器");
+                    });
+                httpservice.request={stcd: stcd};
+                httpservice.method="POST";
+                httpservice.send();
+            }
+
+           
+
+            /**
+             * 设置 appURL 的路径,通过 appURL ,实现与后台通信.这样,即便主文件(swf文件)与后台文件不在一个目录下,只要通过配置文件config.xml
+             * 程序仍然可以运行
+             * 比如用户将 swf 文件下载到了本地文件夹,仍然可以实现访问
+             * config.xml 的数据,一般在 application 初始化时向后台一次性读到用户浏览器的内存中
+             * */
+            public function setAppURL(path:String):void
+            {
+                this.appURL=path;
+            }
+        ]]>
+    </mx:Script>
+
+    <mx:Label width="100"
+              text="测站编码"/>
+    <mx:TextInput width="150"
+                  name="STCD"
+                  restrict="0-9"
+                  maxChars="8"/>
+    <mx:Label width="100"
+              text="测站名称"/>
+    <mx:TextInput width="150"
+                  name="STNM"/>
+    <mx:Label width="100"
+              text="河流名称"
+              />
+    <mx:TextInput 
+    	name="RVNM"
+                 
+                 width="150"/>
+    <mx:Label width="100"
+              text="水系名称"/>
+ <mx:TextInput 
+    	name="HNNM"
+                 
+                 width="150"/>
+    <mx:Label width="100"
+              text="流域名称"/>
+ <mx:TextInput 
+    	name="BSNM"
+                 
+                 width="150"/>
+    <mx:Label width="100"
+              text="经度"/>
+    <mx:TextInput width="150"
+                  name="lgtd"
+                  restrict="0-9"
+                  maxChars="7"/>
+    <mx:Label width="100"
+              text="纬度"/>
+    <mx:TextInput width="150"
+                  name="lttd"
+                  restrict="0-9"
+                  maxChars="6"/>
+    <mx:Label width="100"
+              text="站址"/>
+    <mx:TextInput width="150"
+                  name="STLC"/>
+    <mx:Label width="100"
+              text="行政区划码"/>
+    <mx:TextInput width="150"
+                  restrict="0-9"
+                  name="ADDVCD"/>
+    <mx:Label width="100"
+              text="修正基值"/>
+    <mx:TextInput width="150"
+                  name="MDBZ"/>
+    <mx:Label width="100"
+              text="修正参数"/>
+    <mx:TextInput width="150"
+                  name="MDPR"/>
+    <mx:Label width="100"
+              text="基面名称"/>
+    <mx:TextInput width="150"
+                  name="DTMNM"/>
+    <mx:Label width="100"
+              text="基面高程"/>
+    <mx:TextInput width="150"
+                  name="DTMEL"
+                  restrict="0-9\."/>
+    <mx:Label width="100"
+              text="站类"/>
+    <mx:ComboBox dataProvider="{STTP}"
+                 name="STTP"
+                 width="150"/>
+    <mx:Label width="100"
+              text="拍报段次"/>
+    <mx:TextInput name="DFRTMS"
+                  width="150"/>
+    <mx:Label width="100"
+              text="拍报项目"/>
+    <mx:TextInput width="150"
+                  name="FRITM"
+                 />
+    <mx:Label width="100"
+              text="报汛等级"/>
+    <mx:ComboBox dataProvider="{FRGRD}"
+                 name="FRGRD"
+                 width="150"/>
+    <mx:Label width="100"
+              text="始报年月"/>
+    <mx:DateField formatString="YYYYMM"
+                  name="BGFRYM"
+                  width="150"/>
+    <mx:Label width="100"
+              text="截报年月"/>
+    <mx:DateField formatString="YYYYMM"
+                  name="EDFRYM"
+                  width="150"/>
+    <mx:Label width="100"
+              text="管理机构"/>
+    <mx:TextInput width="150"
+                  name="ADMAUTH"/>
+    <mx:Label width="100"
+              text="测站岸别"/>
+ <mx:TextInput 
+    	name="STBK"
+                 
+                 width="150"/>
+    <mx:Label width="100"
+              text="集水面积"/>
+    <mx:TextInput width="150"
+                  name="DRNA"
+                  restrict="0-9\."/>
+    <mx:Label width="100"
+              text="拼音码"/>
+    <mx:TextInput width="150"
+                  name="PHCD"
+                  restrict="a-z"/>
+</FlowContainer>

@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--TODO,菜单栏要根据用户的权限自定义设置,需要新建一个 compoment 来设置-->
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+           width="100%"
+           height="100%">
+    <mx:Script>
+        <![CDATA[
+        	import mx.events.CloseEvent;
+        	import mx.controls.Alert;
+        	import mx.rpc.http.mxml.HTTPService;
+        	import mx.rpc.events.FaultEvent;
+        	import mx.rpc.events.ResultEvent;
+        	import mx.core.Application;
+            import org.openscales.core.basetypes.LonLat;
+            import org.openscales.core.layer.FeatureLayer;
+            import mx.events.MenuEvent;
+            import org.openscales.core.Map;
+            private var map:Map=null;
+
+            //默认的后台文件路径,可以通过 app.php?controller=c1&action=a2调用不同数据
+            private var appURL:String="app.php";
+            
+            private var searchKMLLayers:LayerKML = null;
+            
+            public var app:Application = null;
+
+            public function setMap(myMap:Map):void
+            {
+                this.map=myMap;
+            }
+
+            /**
+             * 设置 appURL 的路径,通过 appURL ,实现与后台通信.这样,即便主文件(swf文件)与后台文件不在一个目录下,只要通过配置文件config.xml
+             * 程序仍然可以运行
+             * 比如用户将 swf 文件下载到了本地文件夹,仍然可以实现访问
+             * config.xml 的数据,一般在 application 初始化时向后台一次性读到用户浏览器的内存中
+             * */
+            public function setAppURL(path:String):void
+            {
+                this.appURL=path;
+            }
+
+            public function menuItemClick(event:MenuEvent)
+            {
+                if (event.label == "查询")
+                {
+                	this.map.setCenter(new LonLat(108.30215, 22.80422), 5);
+                    map.baseLayer.alpha=0.2;
+                    wxf_searchStation(this.map,this.app);
+                }
+                else if (event.label == "水库")
+                {
+                    var layers:Array=this.map.featureLayers;
+                    for (var i:int=0; i < layers.length; i++)
+                    {
+                        if ((layers[i] as FeatureLayer).name == "南宁所有水库")
+                        {
+                            this.map.removeLayer(layers[i]);
+                            return;
+                        }
+                    }
+                    var kmlRseLayer:LayerKML=new LayerKML(this.map, "南宁所有水库");
+                    var searchConditions:Object=new Object();
+                    searchConditions.STTP="RR";
+                    this.map.setCenter(new LonLat(108.30215, 22.80422), 5);
+                    map.baseLayer.alpha=0.2;
+                    kmlRseLayer.readKml(this.appURL + "?controller=st_stbprp_b&action=readKml", searchConditions);
+
+                }
+                else if (event.label == "桥梁")
+                {
+                    var layers:Array=this.map.featureLayers;
+                    for (var i:int=0; i < layers.length; i++)
+                    {
+                        if ((layers[i] as FeatureLayer).name == "市区桥梁")
+                        {
+                            this.map.removeLayer(layers[i]);
+                            return;
+                        }
+                    }
+                    var kmlRseLayer:LayerKML=new LayerKML(this.map, "市区桥梁");
+                    this.map.setCenter(new LonLat(108.30215, 22.80422), 9);
+                    map.baseLayer.alpha=0.2;
+                    kmlRseLayer.readKml("kmlData/BRIDGE.XML", null);
+                }
+                else if (event.label == "视频点")
+                {
+                    var layers:Array=this.map.featureLayers;
+                    for (var i:int=0; i < layers.length; i++)
+                    {
+                        if ((layers[i] as FeatureLayer).name == "防汛项目视频点")
+                        {
+                            this.map.removeLayer(layers[i]);
+                            return;
+                        }
+                    }
+                    var kmlRseLayer:LayerKML=new LayerKML(this.map, "防汛项目视频点");
+                    var searchConditions:Object=new Object();
+                    searchConditions.STTP="VD";
+                    this.map.setCenter(new LonLat(108.30215, 22.80422), 9);
+                    map.baseLayer.alpha=0.2;
+                    kmlRseLayer.readKml(this.appURL + "?controller=st_stbprp_b&action=readKml", searchConditions);
+                }
+                else if (event.label == "泵站")
+                {
+                    var layers:Array=this.map.featureLayers;
+                    for (var i:int=0; i < layers.length; i++)
+                    {
+                        if ((layers[i] as FeatureLayer).name == "市区泵站")
+                        {
+                            this.map.removeLayer(layers[i]);
+                            return;
+                        }
+                    }
+                    var kmlRseLayer:LayerKML=new LayerKML(this.map, "市区泵站");
+                    var searchConditions:Object=new Object();
+                    searchConditions.STTP="DP";
+                    this.map.setCenter(new LonLat(108.30215, 22.80422), 9);
+                    map.baseLayer.alpha=0.2;
+                    kmlRseLayer.readKml(this.appURL + "?controller=st_stbprp_b&action=readKml", searchConditions);
+                }
+                else if (event.label == "堤防")
+                {
+                    var layers:Array=this.map.featureLayers;
+                    for (var i:int=0; i < layers.length; i++)
+                    {
+                        if ((layers[i] as FeatureLayer).name == "邕江堤防")
+                        {
+                            this.map.removeLayer(layers[i]);
+                            return;
+                        }
+                    }
+
+                    var kmlRseLayer:LayerKML=new LayerKML(this.map, "邕江堤防");
+
+                    this.map.setCenter(new LonLat(108.30215, 22.80422), 9);
+                    map.baseLayer.alpha=0.2;
+                    kmlRseLayer.readKml("kmlData/LINE_RIGHT.XML", null);
+                    kmlRseLayer.readKml("kmlData/LINE_LEFT.XML", null);
+                }
+                else if (event.label == "防洪闸")
+                {
+                    var layers:Array=this.map.featureLayers;
+                    for (var i:int=0; i < layers.length; i++)
+                    {
+                        if ((layers[i] as FeatureLayer).name == "邕江防洪闸")
+                        {
+                            this.map.removeLayer(layers[i]);
+                            return;
+                        }
+                    }
+                    var kmlRseLayer:LayerKML=new LayerKML(this.map, "邕江防洪闸");
+
+                    this.map.setCenter(new LonLat(108.30215, 22.80422), 9);
+                    map.baseLayer.alpha=0.2;
+                    kmlRseLayer.readKml("kmlData/LEFT_DP.XML", null);
+                    kmlRseLayer.readKml("kmlData/RIGHT_DP.XML", null);
+                }
+                else if (event.label == "其他穿堤建筑物")
+                {
+                    var layers:Array=this.map.featureLayers;
+                    for (var i:int=0; i < layers.length; i++)
+                    {
+                        if ((layers[i] as FeatureLayer).name == "邕江穿堤建筑物")
+                        {
+                            this.map.removeLayer(layers[i]);
+                            return;
+                        }
+                    }
+                    var kmlRseLayer:LayerKML=new LayerKML(this.map, "邕江穿堤建筑物");
+
+                    this.map.setCenter(new LonLat(108.30215, 22.80422), 9);
+                    map.baseLayer.alpha=0.2;
+                    kmlRseLayer.readKml("kmlData/CDG.XML", null);
+                }
+                else if (event.label == "实时水库水位")
+                {
+                    var layers:Array=this.map.featureLayers;
+                    for (var i:int=0; i < layers.length; i++)
+                    {
+                        if ((layers[i] as FeatureLayer).name == "实时水库水位")
+                        {
+                            this.map.removeLayer(layers[i]);
+                            return;
+                        }
+                    }
+                    var kmlRseLayer:LayerKML=new LayerKML(this.map, "实时水库水位");
+
+                    this.map.setCenter(new LonLat(108.30215, 22.80422), 5);
+                    map.baseLayer.alpha=0.2;
+                    kmlRseLayer.readKml(this.appURL + "?controller=st_rsvr_r&action=recentData", null);
+                }
+				else if (event.label == "实时河道水位")
+                {
+                    var layers:Array=this.map.featureLayers;
+                    for (var i:int=0; i < layers.length; i++)
+                    {
+                        if ((layers[i] as FeatureLayer).name == "实时河道水位")
+                        {
+                            this.map.removeLayer(layers[i]);
+                            return;
+                        }
+                    }
+                    var kmlRseLayer:LayerKML=new LayerKML(this.map, "实时河道水位");
+
+                    this.map.setCenter(new LonLat(108.30215, 22.80422), 5);
+                    map.baseLayer.alpha=0.2;
+                    kmlRseLayer.readKml(this.appURL + "?controller=st_river_r&action=recentData", null);
+                }                
+            }
+
+
+            /**
+             * 为站点查询提供功能
+             * */
+            public function wxf_searchStation(map:Map,app:Application):void
+            {
+                //添加一个漂浮框
+                var window:SuperPanel=new SuperPanel();
+                window.allowClose=true;
+                window.allowDrag=true;
+                window.allowMinimize=true;
+                window.width=300;
+                window.height=300;
+                window.x=(Capabilities.screenResolutionX - app.contentMouseX) > 330 ? app.contentMouseX : app.contentMouseX - 330;
+                window.y=(Capabilities.screenResolutionY - app.contentMouseY) > 330 ? app.contentMouseY : app.contentMouseY - 330;
+                window.title="站点查询";
+                window.addEventListener(CloseEvent.CLOSE, function()
+                    {
+                        if (searchKMLLayers != null)
+                        {
+                            map.removeLayer(searchKMLLayers.mainlayer);
+                            searchKMLLayers=null;
+                        }
+                        app.removeChild(window);
+                    });
+                window.name="windowSearchStation";
+                app.addChild(window);
+
+                var st_stbprp_b_searchCanvas:ST_STBPRP_B_search=new ST_STBPRP_B_search();
+                st_stbprp_b_searchCanvas.app=app;
+                st_stbprp_b_searchCanvas.addEventListener("clickSearchBut", function()
+                    {
+                        searchAndDrawKml(appURL, st_stbprp_b_searchCanvas.getSearchConditions(), "windowSearchStation",app);
+                    });
+                    
+                st_stbprp_b_searchCanvas.addEventListener("clickSearchWithDataBut", function():void
+                    {
+                        window.allowClose=false;
+                        var st_stbprp_r:ST_STBPRP_R_search=new ST_STBPRP_R_search();
+
+                        //添加一个漂浮框
+                        var window1:SuperPanel=new SuperPanel();
+                        window1.allowClose=true;
+                        window1.allowDrag=true;
+                        window1.allowMinimize=true;
+                        window1.width=300;
+                        window1.height=200;
+                        window1.x=(Capabilities.screenResolutionX - app.contentMouseX) > 350 ? app.contentMouseX : app.contentMouseX - 350;
+                        window1.y=(Capabilities.screenResolutionY - app.contentMouseY) > 250 ? app.contentMouseY : app.contentMouseY - 250;
+                        window1.title="站点查询";
+                        window1.addEventListener(CloseEvent.CLOSE, function():void
+                            {
+                                window.allowClose=true;
+                                app.removeChild(window1);
+                            });
+                        window1.name="windowSearchStationWithData";
+                        addChild(window1);
+                        window1.addChild(st_stbprp_r);
+                        st_stbprp_r.addEventListener("clickSearchBut", function():void
+                            {
+                                var conditionsWithData:Dictionary=st_stbprp_r.getSearchConditions(); //将数据结合控件的查询条件和这个控件的查询条件结合起来
+                                var conditionsThis:Dictionary=st_stbprp_b_searchCanvas.getSearchConditions();
+                                for (var key:String in conditionsWithData)
+                                {
+                                    conditionsThis[key]=conditionsWithData[key];
+                                }
+                                searchAndDrawKml(appURL, conditionsThis, "windowSearchStationWithData",app);
+                            });
+                    });
+                window.addChild(st_stbprp_b_searchCanvas);
+            }
+
+            
+
+            public function searchAndDrawKml(appURL:String, conditions:Dictionary, domName:String,app:Application):void
+            {
+                if (appURL == null)
+                {
+                    Alert.show("尚未读取配置文件,请等待")
+                    return;
+                }
+                if (searchKMLLayers != null)
+                {
+                    map.removeLayer(searchKMLLayers.mainlayer);
+                }
+                else
+                {
+                    searchKMLLayers=new LayerKML(map, "站点查询层");
+                }
+                var httpservice:HTTPService=new HTTPService();
+                httpservice.method="POST";
+                httpservice.request=(conditions as Object);
+                httpservice.url=appURL + "?controller=st_stbprp_b&action=readKml";
+                httpservice.addEventListener(ResultEvent.RESULT, function(event:ResultEvent):void
+                    {
+                        if (domName == "windowSearchStation")
+                        {
+                            ((app.getChildByName("windowSearchStation") as SuperPanel).getChildAt(0) as ST_STBPRP_B_search).httpServiceStopped();
+                        }
+                        else
+                        {
+                           ((app.getChildByName("windowSearchStationWithData") as SuperPanel).getChildAt(0) as ST_STBPRP_R_search).httpServiceStopped();
+                        }
+                        searchKMLLayers.drawKML(event);
+                    });
+                httpservice.addEventListener(FaultEvent.FAULT, function(event:FaultEvent):void
+                    {
+                        if (domName == "windowSearchStation")
+                        {
+                            ((app.getChildByName("windowSearchStation") as SuperPanel).getChildAt(0) as ST_STBPRP_R_search).httpServiceStopped();
+                        }
+                        else
+                        {
+                            ((app.getChildByName("windowSearchStationWithData") as SuperPanel).getChildAt(0) as ST_STBPRP_R_search).httpServiceStopped();
+                        }
+                        Alert.show("无法读取数据");
+                    });
+                httpservice.send();
+            }
+        ]]>
+    </mx:Script>
+    <mx:MenuBar labelField="@label"
+                itemClick="menuItemClick(event)">
+        <mx:XMLList>
+            <menuitem label="水利工程数据库">
+                <menuitem label="水库"/>
+                <menuitem label="桥梁"/>
+                <menuitem label="堤防"/>
+                <menuitem label="泵站"/>
+                <menuitem label="防洪闸"/>
+                <menuitem label="视频点"/>
+                <menuitem label="其他穿堤建筑物"/>
+                <menuitem label="查询"/>
+            </menuitem>
+            <menuitem label="水雨情">
+                <menuitem label="实时水库水位"/>
+                <menuitem label="实时河道水位"/>
+                <menuitem label="实时雨量"/>
+            </menuitem>
+            <menuitem label="气象">
+                <menuitem label="实时温度"/>
+                <menuitem label="实时风情"/>
+                <menuitem label="太平洋台风"/>
+                <menuitem label="中国气象云图"/>
+            </menuitem>
+        </mx:XMLList>
+    </mx:MenuBar>
+</mx:Canvas>

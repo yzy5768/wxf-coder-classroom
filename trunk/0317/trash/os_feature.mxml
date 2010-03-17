@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml"
+                layout="absolute"
+                xmlns:flex="main.flex.*"
+                width="100%"
+                height="100%">
+
+    <mx:Canvas xmlns="*"
+               xmlns:mx="http://www.adobe.com/2006/mxml"
+               xmlns:os="http://openscales.org"
+               width="100%"
+               creationComplete="initMap();"
+               height="100%">
+
+        <os:Map id="fxmap"
+                
+                centerLonLat="108.36178,22.81471"
+                height="100%"
+                width="100%">
+<!--
+            <os:MaxExtent left="104.484"
+                          bottom="21.351"
+                          right="112.056"
+                          top="26.389"/>
+                          -->
+            <os:WMSC name="nnfx_postgis_23"
+                     url="http://58.59.136.84:8080/geoserver/wms"
+                     layers="nnfx_postgis"
+                     format="image/jpeg"
+                     isBaseLayer="true"/>
+
+			<os:ScaleLine />
+            <os:MousePosition x="10"
+                              y="{height-20}"
+                              displayProjection="EPSG:4326"/>
+
+            <os:DragHandler/>
+            <os:WheelHandler  />
+<!--
+            <os:Extent left="104.484"
+                       bottom="21.351"
+                       right="112.056"
+                       top="26.389"/>
+-->
+
+        </os:Map>
+
+
+        <mx:Script>
+            <![CDATA[
+            	import mx.controls.Image;
+            	import org.openscales.core.feature.Marker;
+            	import org.openscales.core.geometry.LineString;
+            	import org.openscales.core.feature.LineStringFeature;
+            	import org.openscales.core.style.symbolizer.PolygonSymbolizer;
+            	import org.openscales.core.geometry.Polygon;
+            	import org.openscales.core.feature.PolygonFeature;
+            	import org.openscales.core.geometry.LinearRing;
+                import org.openscales.core.style.stroke.Stroke;
+                import org.openscales.core.style.fill.SolidFill;
+                import org.openscales.core.style.marker.WellKnownMarker;
+                import org.openscales.core.style.symbolizer.PointSymbolizer;
+                import org.openscales.core.style.Rule;
+                import org.openscales.core.style.Style;
+                import org.openscales.core.layer.FeatureLayer;
+                import org.openscales.core.feature.Feature;
+                import org.openscales.core.Map;
+                import org.openscales.core.Trace;
+                import org.openscales.core.geometry.Point;
+                import org.openscales.core.feature.PointFeature;
+
+                [Bindable]
+                private var map:Map=null;
+                [Bindable]
+                public var displayTrace:Boolean=false;
+                [Bindable]
+                public var displayFirebugTrace:Boolean=false;
+
+                private function initMap():void
+                {
+                    Trace.useFireBugConsole=displayFirebugTrace;
+                    map=fxmap.map;
+                    map.zoom = 10;
+                    //map.configuration
+                    
+                    /*
+                    var layer:FeatureLayer = new FeatureLayer("Drawing samples",false,true,"EPSG:4326");
+		            var style:Style;
+		            var rule:Rule;
+		            var arrayComponents:Array;
+		            var arrayVertices:Array;
+		            var point:org.openscales.core.geometry.Point;
+		            
+		            // Add some (black) objects for the tests of inclusion with all the
+		            // features added below.
+		            style = new Style();
+		            style.rules[0] = new Rule();
+		            style.rules[0].symbolizers.push(new PointSymbolizer(new WellKnownMarker(WellKnownMarker.WKN_TRIANGLE,new SolidFill(0x999999,0.5),new Stroke(0x000000,2),12)));
+		            // A point inside of the MultiPolygon (its first polygon).
+		            point = new org.openscales.core.geometry.Point(108.36178,22.81471);
+		            layer.addFeature(new PointFeature(point,null,style));
+		            
+		            style = new Style();
+		            style.rules[0] = new Rule();
+		            style.rules[0].symbolizers.push(new PolygonSymbolizer(new SolidFill(0x999999,0.5),new Stroke(0x000000,2)));
+		            arrayComponents = new Array();
+		            arrayComponents.push(new org.openscales.core.geometry.Point(108.36178,22.81471));
+		            arrayComponents.push(new org.openscales.core.geometry.Point(109.36178,21.81471));
+		            layer.addFeature(new LineStringFeature(new LineString(arrayComponents),null,style));
+            
+					arrayComponents = new Array();
+					arrayVertices = new Array();
+					arrayVertices.push(new org.openscales.core.geometry.Point(108.46178,22.81471));
+					arrayVertices.push(new org.openscales.core.geometry.Point(109.66178,21.91471));
+					arrayVertices.push(new org.openscales.core.geometry.Point(106.66178,23.91471));
+					arrayVertices.push(new org.openscales.core.geometry.Point(101.66178,24.91471));
+					arrayComponents.push(new LinearRing(arrayVertices));
+					layer.addFeature(new PolygonFeature(new Polygon(arrayComponents),null,style));
+					
+					           			 var marker:Marker = new Marker(new org.openscales.core.geometry.Point(108.36178,22.81471),null,null);
+           			 var myimage:Image = new Image();
+           			 myimage.source = "http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png";
+           			 //marker.image = myimage;
+           			 
+           			 layer.addFeature(marker,null);
+		            
+		             var layer:FeatureLayer = layer;
+                // Usefull to test selection when a layer is not displayed
+                //layer.minZoomLevel = 10;
+                
+               // (selectFeaturesHandler.handler as SelectFeaturesHandler).unselectableFeatures = [ layer.getChildAt(4) as PolygonFeature ];
+           			 map.addLayer(layer);
+           			 
+           			 
+           			 */
+
+
+/*
+                    var point:Point=new org.openscales.core.geometry.Point(108, 23);
+                    var pointFeature:PointFeature=new PointFeature(point);
+                    pointFeature.attributes={name: "todo", age: 20, favColor: 'red', align: "cm"};
+                    var layer:FeatureLayer=new FeatureLayer("Drawing samples", false, true, "EPSG:4326");
+                    layer.addFeature(pointFeature);
+                    map.addLayer(layer);
+
+
+                    var layer:FeatureLayer=new FeatureLayer("Drawing samples", false, true, "EPSG:4326");
+                    var style:Style;
+                    var rule:Rule;
+                    var arrayComponents:Array;
+                    var arrayVertices:Array;
+                    var point:org.openscales.core.geometry.Point;
+
+                    // Add some (black) objects for the tests of inclusion with all the
+                    // features added below.
+                    style=new Style();
+                    style.rules[0]=new Rule();
+                    style.rules[0].symbolizers.push(new PointSymbolizer(new WellKnownMarker(WellKnownMarker.WKN_TRIANGLE, new SolidFill(0x999999, 0.5), new Stroke(0x000000, 2), 12)));
+                    // A point inside of the MultiPolygon (its first polygon).
+                    point=new org.openscales.core.geometry.Point(4.649002075147177, 45.78235984585472);
+                    layer.addFeature(new PointFeature(point, null, style));
+
+                    var layer:FeatureLayer=layer;
+                    // Usefull to test selection when a layer is not displayed
+                    layer.minZoomLevel=10;
+
+                    // (selectFeaturesHandler.handler as SelectFeaturesHandler).unselectableFeatures = [ layer.getChildAt(4) as PolygonFeature ];
+                    map.addLayer(layer);
+*/                    
+                }
+            ]]>
+        </mx:Script>
+
+
+    </mx:Canvas>
+</mx:Application>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vistech>
+	<!--数据库连接
+	  * 涉及到 水雨情数据库,行业标准 SL 323 数据库,采用 SQL 2000
+	  * 人事管理数据库 ,公司内部标准 VT_USERS ,采用 SQL 2000
+	  * 工情数据库,公司内部标准 VT_RES ,采用 postGreSql
+	  * 街道数据库,公司内部标准 VT_STREET ,采用 postGreSql
+	  * 行政区划数据库,国标 GB_2260 , 采用 postGreSql
+	  -->
+	<database>
+		<SL323>
+			<server>58.59.136.84</server>
+			<username>sa</username>
+			<password>livemate_111111</password>
+			<dbname>RWDBNN</dbname>
+		</SL323>
+	</database>
+	
+	<!--后台通信地址,前台调用后台的数据都是通过app.php来实现的,
+	  * 以controller 和 action 两个参数
+	  * app.php 可以调用其他的后台文件
+	  -->
+	<appURL>http://localhost:8001/app/app.php</appURL>
+	
+	<!--配置地图参数
+	  * gwc服务的网络地址,这个地址既可以是内网也可以是外网访问
+	  * gwc服务所要调用的图层名称
+	  * 整个地图在初始化时所用的地图中心
+	  -->
+	<map>
+		<gwc>http://localhost:8080/geoserver/wms</gwc>
+		<gwcLayer>nnfx_layergroup_shp</gwcLayer>
+		<center lon='108.26917' lat='22.82535' />
+	</map>
+	
+	<!--系统左侧菜单入口配置
+	  * 系统的模块划分可以通过菜单项看出来
+	  -->
+	<menuData>
+		<menuItem value="水利工程分布">
+			<menuItem value="水库" ></menuItem>
+			<menuItem value="河流" ></menuItem>
+			<menuItem value="堤防" ></menuItem>
+			<menuItem value="穿堤建筑物" ></menuItem>
+			<menuItem value="遥测站" ></menuItem>
+			<menuItem value="视屏站" ></menuItem>
+			<menuItem value="桥梁" ></menuItem>
+		</menuItem>
+		<menuItem value="实时汛情">
+			<menuItem value="水库水位" ></menuItem>
+			<menuItem value="河道水位" ></menuItem>
+		</menuItem>		
+		<menuItem value="实时气象">
+			<menuItem value="降雨分布" ></menuItem>
+			<menuItem value="风情分布" ></menuItem>
+			<menuItem value="温度分布" ></menuItem>
+			<menuItem value="气象云图" ></menuItem>
+			<menuItem value="台风路径" ></menuItem>
+		</menuItem>	
+		<menuItem value="城市排涝">
+			<menuItem value="等高线" ></menuItem>
+			<menuItem value="排涝模拟" ></menuItem>
+		</menuItem>	
+		<menuItem value="洪水预报">
+			<menuItem value="数据输入" ></menuItem>
+			<menuItem value="预报测试" ></menuItem>
+		</menuItem>					
+		<menuItem value="系统管理">
+			<menuItem value="个人用户" ></menuItem>
+			<menuItem value="用户管理" ></menuItem>
+			<menuItem value="网路通信监视" ></menuItem>
+		</menuItem>					
+	</menuData>
+</vistech>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml"
+                layout="absolute"
+                width="100%"
+                xmlns:os="http://openscales.org"
+                height="100%">
+    <mx:Canvas xmlns="*"
+               id="mainCanvas"
+               xmlns:mx="http://www.adobe.com/2006/mxml"
+               width="100%"
+               creationComplete="initMap();"
+               height="100%">
+        <os:Map id="fxmap"
+                centerLonLat="108.36178,22.81471"
+                height="100%"
+                width="100%">
+            <os:ScaleLine/>
+            <os:WMSC name="nnfx_layergroup_7"
+                     url="http://58.59.136.84:8081/geoserver/wms"
+                     layers="nnfx_layergroup_7"
+                     format="image/jpeg"
+                     isBaseLayer="true"/>
+            <os:MousePosition x="10"
+                              y="{height-20}"
+                              displayProjection="EPSG:4326"/>
+
+            <os:WheelHandler/>
+        </os:Map>
+        <mx:Script>
+            <![CDATA[
+                import org.openscales.core.Map;
+
+                [Bindable]
+                private var map:Map=null;
+
+                private function initMap():void
+                {
+                    map=fxmap.map;
+                }
+            ]]>
+        </mx:Script>
+    </mx:Canvas>
+    <os:ControlPanel x="10"
+                     y="10">
+        <os:FeatureDrawingComponent map="{map}" />
+    </os:ControlPanel>
+</mx:Application>
