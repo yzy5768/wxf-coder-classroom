@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+	 这个控件提供了对数据库表 "+type+" 内单条数据的修改界面,
+	 包括修改和新建
+	 "+type+"是测站基本属性表奥,其他遥测站如 河道水文站 水库水文站 气象站 都与这张表做一一映射
+	 这个控件一般要和其他的页面修改控件结合起来,比如说被放置在一个 TAB 页面中
+	 这个功能预计要与 GOOGLE MAP 结合
+	 @Copyright www.vistech.com.cn
+	 @author wxf
+	 @version 2010-01-19
+	 @see config.xml,提供后台的路径
+	 @see SL323—2005,ICS 35.040,L 71,实时雨水情数据库表结构与标识符标准,介绍 "+type+" 的由来
+	 @see app.php,默认的后台路径,唯一的,可以通过 controller action 等参数调用各种功能,大多数返回的数据是 XML 格式
+-->
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+		   width="100%"
+		   height="100%"
+		   xmlns:vistech="com.vistech.*"
+		   xmlns:flexlib="http://code.google.com/p/flexlib/">
+	<mx:Script>
+		<![CDATA[
+			import org.openscales.core.layer.FeatureLayer;
+			import mx.effects.Glow;
+			import org.openscales.core.basetypes.LonLat;
+			import org.openscales.core.Map;
+			import mx.events.ListEvent;
+			import mx.events.FlexEvent;
+			import mx.controls.CheckBox;
+			import mx.controls.NumericStepper;
+			import mx.controls.Label;
+			import mx.effects.Fade;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import mx.controls.DataGrid;
+			import mx.events.CloseEvent;
+			import com.vistech.SuperPanel;
+			import mx.core.Application;
+			import mx.controls.DateField;
+			import mx.messaging.AbstractConsumer;
+			import mx.controls.ComboBox;
+			import mx.collections.ArrayCollection;
+			import mx.rpc.events.FaultEvent;
+			import mx.controls.Alert;
+			import mx.controls.TextInput;
+			import mx.rpc.AsyncToken;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.http.HTTPService;
+			import flexlib.containers.FlowContainer;
+
+			//默认的后台文件路径,可以通过 app.php?controller=c1&action=a2调用不同数据
+			public var appURL:String="app.php";
+
+			public var event:ResultEvent=null;
+
+			//查询条件
+			public var searchConditions:Object=new Object();
+
+			public var resolutions:String=null;
+
+			public var map:Map=null;
+
+			public var type:String=null;
+
+
+			public var alertGlow:Glow;
+			private var myTimer:Timer=new Timer(800, 5);
+			public var _obj:Object=new Object();
+
+
+			public function glow():void
+			{
+				myTimer.removeEventListener(TimerEvent.TIMER, timerEventHandler);
+				myTimer.start();
+				myTimer.addEventListener(TimerEvent.TIMER, timerEventHandler);
+			}
+
+			private function timerEventHandler(event:TimerEvent):void
+			{
+				alertGlow=new Glow;
+				alertGlow.target=_obj;
+				alertGlow.blurXFrom=1;
+				alertGlow.blurXTo=30;
+				alertGlow.blurYFrom=1;
+				alertGlow.blurYTo=30;
+				alertGlow.color=0xff0000;
+				alertGlow.duration=800;
+				alertGlow.alphaFrom=1;
+				alertGlow.strength=25;
+				alertGlow.alphaTo=0;
+				alertGlow.play();
+				
+			}
+
+
+			public function setGridFromKML(xml:XML)
+			{
+				grid.dataProvider=xml.Document.Placemark;
+				grid.addEventListener(ListEvent.ITEM_CLICK, function(event:ListEvent):void
+					{
+						map.setCenter(new LonLat((event.itemRenderer.data as XML).LookAt.longitude, (event.itemRenderer.data as XML).LookAt.latitude));
+						_obj=(map.getLayerByName(type) as FeatureLayer).features[event.rowIndex];
+						glow();
+					});
+				total.text="总计" + (xml.Document.Placemark as XMLList).length() + "条数据";
+			}
+
+			private function search():void
+			{
+
+				if (map.getLayerByName(type))
+					this.map.removeLayer(map.getLayerByName(type));
+				grid.dataProvider=null;
+				this.searchConditions = new Object();
+				if (!name_.text == "")
+				{
+					this.searchConditions.name=name_.text;
+				}
+
+				searchBut.label="查询中...";
+				searchBut.enabled=false;
+				var httpservice:HTTPService=new HTTPService();
+				httpservice.url=appURL + "?controller=" + type + "&action=readKml" + "&rand=" + Math.random();
+				httpservice.resultFormat = "xml";
+				httpservice.addEventListener(ResultEvent.RESULT, function(event:ResultEvent):void
+					{
+						var dataXML:XML=XML(event.result);
+						
+						var kml:KML2=new KML2(type, "", map.maxExtent);
+						var arr:Array=resolutions.split(",");
+						kml.resolutions=arr;
+						map.addLayer(kml);
+						kml.drawKML(dataXML);
+						searchBut.label="查询";
+						searchBut.enabled=true;
+						setGridFromKML(dataXML);
+					});
+				httpservice.addEventListener(FaultEvent.FAULT, function(event:FaultEvent):void
+					{
+						Alert.show("无法连接到服务器");
+						searchBut.label="查询";
+						searchBut.enabled=true;
+					});
+				var requestObject:Object=new Object();
+				if (this.searchConditions != null)
+					requestObject=this.searchConditions;
+				httpservice.request=requestObject;
+				httpservice.method="POST";
+				httpservice.send();
+			}
+		]]>
+	</mx:Script>
+	<mx:Label text="名称:"
+			  left="10"
+			  top="12"/>
+	<mx:TextInput id="name_"
+				  left="48"
+				  top="10"/>
+	<mx:Label text="总共0条数据"
+			  id="total"
+			  top="100"
+			  left="100"
+			  width="108"/>
+	<mx:Button label="查询"
+			   id="searchBut"
+			   top="98"
+			   left="10"
+			   width="82"
+			   click="search();"/>
+	<mx:Button label="添加"
+			   id="addBut"
+			   top="68"
+			   left="10"
+			   width="82"
+			   click="dispatchEvent(new Event('addItem'))"/>			   
+	<mx:DataGrid width="100%"
+				 bottom="20"
+				 top="128"
+				 id="grid">
+		<mx:columns>
+			<mx:DataGridColumn dataField="id"
+							   headerText="编码"/>
+			<mx:DataGridColumn dataField="name"
+							   headerText="名称"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<!--为按钮添加事件,使得按钮可以被外部监听-->
+	<mx:Metadata>
+        [Event(name="searchComplete", type="flash.events.Event")]
+        [Event(name="addItem", type="flash.events.Event")]
+    </mx:Metadata>
+</mx:Canvas>

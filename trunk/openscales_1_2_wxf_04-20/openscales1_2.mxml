@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--南宁防汛应急决策支持指挥系统,前台核心文件
+	 * 需要导入 街道图 和 卫星图(如果用户能上外网)
+	 * @copyright www.vistech.com.cn 杭州旅行者科技有限公司
+	 * @author wxf.livemate@gmail.com
+	 * @version 2010-03-07
+-->
+<mx:Application xmlns="*"
+				fontSize="12"
+				xmlns:mx="http://www.adobe.com/2006/mxml"
+				layout="absolute"
+				xmlns:vistech="com.vistech.*"
+				xmlns:os="http://openscales.org">
+	<mx:Style source="assets/css/Styles.css"/>
+	<mx:Canvas creationComplete="config();"
+			   width="100%"
+			   height="100%">
+		<os:Map id="fxmap"
+				width="100%"
+				height="100%">
+
+			<mx:Image source="assets/TL.png"
+					  y="{height-180}"
+					  x="{width-240}"
+					  id="tuli"
+					  visible="false"/>
+			<mx:Button label="图例"
+					   y="{height-40}"
+					   x="{width-160}"
+					   id="tuli_but"
+					   click="tuli_();"/>
+
+			<!--添加一个本地的gwc地图服务.gwc是在安装 geoServer 2.0.1 时自动安装的.如果操作系统为 windows xp ,部分 gwc 服务会不稳定
+				 * 所有添加的地图都可以被mapSwitcher识别到
+				 * resolutions 的比例系数是从 geoWebCache 发布的 openLayers demo 的源代码中复制过来的.如果这个没有和gwc服务的比例系数相对应,地图会出不来.
+				 * 如果你用的是 WMSC 服务而不是 gwc 服务的话,则不用考虑 比例系数 对应问题
+				 * EPSG:4326 是一种经纬度换算标准.一般而言,中国大陆流行的 经纬度换算标准与国际标准不同
+				 * openScales 默认的地图放大倍数为 16 层,最大放大尺度为  1:20000 .通过设置 resolutiosn ,可以自由设置地图的放大层次
+				 * 必须设置 format. 因为gwc 服务对 image/png24 的支持最好. image/png 就是 image/png24 .
+				 * 如果想降低服务器的'地图缓存硬盘开销',可以把 fomat 换成 image/png8,这样地图的画质会差一点,但硬盘开销会小很多,当然网络开销也会小很多
+			-->
+
+			<os:WMSC id="wmsc"
+					 name="南宁防汛底图"
+					 isBaseLayer="true"
+					 format="image/png"
+					 resolutions="0.010986328125, 0.0054931640625, 0.00274658203125, 0.001373291015625, 6.866455078125E-4, 3.4332275390625E-4, 1.71661376953125E-4, 8.58306884765625E-5, 4.291534423828125E-5, 2.1457672119140625E-5,1.0728836059570312E-5, 5.364418029785156E-6"
+					 projection="EPSG:4326"/>
+
+			<!--添加鼠标滚轮事件,这个鼠标滚轮与googlemap的滚轮不一样,
+				 * google的滚轮可以在鼠标位置放大地图,而openScales只能在地图中心放大缩小
+				 * 在openScales的后继版本中会仿照GOOGLE开发此功能
+				 * ERSI公司的 flex 地图系列中,已经提供了此功能.当然,ERSI他们绝对不会将源码开方
+			-->
+			<os:WheelHandler/>
+
+			<!--当地图处于'导入'过程中,在地图的右下角显示一个图标-->
+			<os:Spinner id="spinner"
+						x="{width-20}"
+						y="{height-20}"/>
+
+			<!--跟踪鼠标所在经纬度-->
+			<os:MousePosition x="10"
+							  y="{height-20}"
+							  displayProjection="EPSG:4326"/>
+			<!--地图比例尺-->
+			<os:ScaleLine x="{width-100-10}"
+						  y="{height-80}"/>
+
+			<os:LayerSwitcher/>
+
+		</os:Map>
+
+		<mx:Script>
+			<![CDATA[
+				import org.openscales.core.basetypes.Size;
+				import org.openscales.core.feature.LineStringFeature;
+				import org.openscales.core.geometry.LinearRing;
+				import mx.controls.TextInput;
+				import com.vistech.dynamicForm;
+				import org.openscales.core.feature.PolygonFeature;
+				import org.openscales.core.geometry.Polygon;
+				import org.openscales.core.handler.feature.draw.DrawHandler;
+				import com.vistech.DrawLayer;
+				import mx.core.IFlexDisplayObject;
+				import mx.events.FlexEvent;
+				import org.openscales.core.feature.Feature;
+				import org.openscales.component.control.FeatureDrawing;
+				import org.openscales.core.style.stroke.Stroke;
+				import org.openscales.core.style.fill.SolidFill;
+				import org.openscales.core.style.marker.WellKnownMarker;
+				import org.openscales.core.style.symbolizer.PointSymbolizer;
+				import org.openscales.core.style.Rule;
+				import org.openscales.core.style.Style;
+				import org.openscales.core.geometry.Point;
+				import org.openscales.core.layer.KML;
+				import com.vistech.KML2;
+				import com.vistech.pumbingStation_grid;
+				import com.vistech.mapgrid;
+
+				import com.vistech.VT_PROJECTS_RIVER_grid;
+				import com.vistech.LayerKML;
+				import org.openscales.core.layer.ogc.WMSC;
+				import mx.rpc.http.mxml.HTTPService;
+				import mx.rpc.events.ResultEvent;
+				import mx.rpc.events.FaultEvent;
+				import com.vistech.VT_PROJECTS_RES_grid;
+				import com.vistech.VT_PROJECTS_tabWindow;
+				import mx.events.CloseEvent;
+				import com.vistech.SuperPanel;
+				import org.openscales.core.events.FeatureEvent;
+				import org.openscales.core.popup.Anchored;
+				import com.vistech.LayerXMLData;
+				import mx.controls.Alert;
+				import org.openscales.core.feature.PointFeature;
+				import org.openscales.core.layer.FeatureLayer;
+				import org.openscales.core.basetypes.LonLat;
+				import org.openscales.core.Map;
+				import org.openscales.core.Trace;
+
+				[Bindable]
+				private var map:Map=null;
+
+				private var appURL:String="app.php";
+				private var popup:Anchored;
+				private var draw:DrawLayer=new DrawLayer();
+
+				private var resolutions:String="0.010986328125, 0.0054931640625, 0.00274658203125, 0.001373291015625, 6.866455078125E-4, 3.4332275390625E-4, 1.71661376953125E-4, 8.58306884765625E-5, 4.291534423828125E-5, 2.1457672119140625E-5,1.0728836059570312E-5, 5.364418029785156E-6";
+
+
+				private function tuli_():void
+				{
+					tuli.visible=(tuli.visible) ? false : true;
+				}
+
+				private function config()
+				{
+					
+					
+
+					var httpservice:HTTPService=new HTTPService();
+					httpservice.url="config.xml";
+					httpservice.method="GET";
+					httpservice.addEventListener(ResultEvent.RESULT, function(event:ResultEvent)
+						{
+							appURL=event.result.vistech.appURL;
+
+							map=fxmap.map;
+
+							wmsc.url=event.result.vistech.map.gwc;
+							wmsc.layers=event.result.vistech.map.gwcLayer;
+							map.zoom=8;
+
+							//必须在这里设置地图的中心.如果在 <os:Map 标签中设置地图中心,会导致 绘图工具 失效
+							map.setCenter(new LonLat(event.result.vistech.map.center.lon as Number, event.result.vistech.map.center.lat as Number));
+
+							map.addEventListener(FeatureEvent.FEATURE_OVER, onFeatureOver);
+							map.addEventListener(FeatureEvent.FEATURE_OUT, onFeatureOut);
+							map.addEventListener(FeatureEvent.FEATURE_CLICK, onFeatureClick);
+
+
+							ExternalInterface.addCallback('callAS', callAS);
+							
+							addChild(draw);
+
+							draw.map=map;
+							draw.addEventListener(FlexEvent.CREATION_COMPLETE, function():void
+								{
+									draw.visible=false;
+									draw._drawHandler.mode=DrawHandler.DRAG_MODE;
+
+								});
+
+						});
+					httpservice.addEventListener(FaultEvent.FAULT, function(event:FaultEvent):void
+						{
+							Alert.show("无法读取配置文件 , 请将其放到 地图 文件的同目录下,或者配置文件格式错误");
+						});
+					httpservice.send();
+				}
+
+				public function callAS(type:String=null):void
+				{
+
+					if (type == null)
+					{
+						addLayer("vt_projects_res");
+					}
+					else
+					{
+						addLayer(type);
+					}
+				}
+
+				private function addLayer(type:String=null):void
+				{ //TODO
+					var kml:KML2=new KML2(type, appURL + "?controller=" + type + "&action=readKml" + "&rand=" + Math.random(), map.maxExtent);
+					var arr:Array=resolutions.split(",");
+					kml.resolutions=arr;
+
+					map.addLayer(kml);
+					kml.addEventListener("kmlloaded", function():void
+						{
+							var window:SuperPanel=new SuperPanel();
+							window.allowClose=true;
+							window.allowDrag=true;
+							window.allowMinimize=true;
+							window.allowResize=true;
+							window.width=250;
+							window.height=400;
+							window.title="列表";
+							addChild(window);
+
+							window.addEventListener(CloseEvent.CLOSE, function():void
+								{
+									removeChild(window);
+									map.removeLayer(map.getLayerByName(type));
+								});
+
+							var grid:mapgrid=new mapgrid();
+							grid.resolutions=resolutions;
+							wmsc.alpha=0.5;
+							grid.map=map;
+							grid.type=type;
+							window.addChild(grid);
+							grid.setGridFromKML(kml._xml);
+							grid.addEventListener("addItem", function():void
+								{
+									draw.visible=true;
+									draw.notEditOnly();
+
+									map.removeEventListener(FeatureEvent.FEATURE_CLICK, onFeatureClick);
+									map.removeEventListener(FeatureEvent.FEATURE_OVER, onFeatureOver);
+
+									var window:SuperPanel=new SuperPanel();
+									window.allowClose=true;
+									window.allowDrag=true;
+									window.allowMinimize=true;
+									window.allowResize=true;
+									window.width=680;
+									window.height=500;
+									window.title="工情信息";
+
+									window.addEventListener(CloseEvent.CLOSE, function()
+										{
+											map.addEventListener(FeatureEvent.FEATURE_CLICK, onFeatureClick);
+											map.addEventListener(FeatureEvent.FEATURE_OVER, onFeatureOver);
+
+											draw._drawHandler.mode=DrawHandler.DRAG_MODE;
+											draw.visible=false;
+
+											removeChild(window);
+											draw.deleteAll();
+										});
+									addChild(window);
+
+									var tab2:VT_PROJECTS_tabWindow=new VT_PROJECTS_tabWindow();
+									tab2.appURL=appURL;
+									var form:dynamicForm=tab2.initWindowTab("0", type);
+									window.addChild(tab2);
+
+									draw.addEventListener("addItem", function():void
+										{
+											(form.getChildByName("the_geom") as TextInput).text=getFeatureData4PostGis(draw.drawLayer.features[0]);
+										});
+
+								});
+						});
+				}
+
+				/**
+				 * 提供热点功能:鼠标经过,弹出一个这个点信息的简要说明,鼠标点击,则弹出一个框介绍这个点的详细信息
+				 * */
+				private function onFeatureOver(event:FeatureEvent):void
+				{
+					if (popup)
+					{
+						popup.destroy();
+					}
+					popup=null;
+					popup=new Anchored(null,0,0,new Size(100,50),'',null,false);
+					popup.alpha = 0.5;
+					popup.feature=event.feature;
+					map.addPopup(popup, true);
+				}
+
+				private function onFeatureOut(event:FeatureEvent):void
+				{
+					if (popup)
+					{
+						popup.destroy();
+					}
+				}
+
+				var flat:int=0;
+
+				public function onFeatureClick(event:FeatureEvent):void
+				{
+					map.removeEventListener(FeatureEvent.FEATURE_CLICK, onFeatureClick);
+					map.removeEventListener(FeatureEvent.FEATURE_OVER, onFeatureOver);
+
+					var window:SuperPanel=new SuperPanel();
+					window.allowClose=true;
+					window.allowDrag=true;
+					window.allowMinimize=true;
+					window.allowResize=true;
+					window.width=680;
+					window.height=500;
+					window.title="工情信息";
+
+					draw.visible=true;
+					//draw.setEditOnly();
+
+					window.addEventListener(CloseEvent.CLOSE, function()
+						{
+							map.addEventListener(FeatureEvent.FEATURE_CLICK, onFeatureClick);
+							map.addEventListener(FeatureEvent.FEATURE_OVER, onFeatureOver);
+
+
+							draw._drawHandler.mode=DrawHandler.DRAG_MODE;
+							draw.visible=false;
+							(map.getLayerByName((event.feature.attributes as Object).type) as FeatureLayer).addFeature(event.feature);
+
+							removeChild(window);
+						});
+					addChild(window);
+
+					var tab2:VT_PROJECTS_tabWindow=new VT_PROJECTS_tabWindow();
+					tab2.appURL=appURL;
+
+					var form:dynamicForm=tab2.initWindowTab((event.feature.attributes as Object).id.toString(), (event.feature.attributes as Object).type);
+					window.addChild(tab2);
+
+					var featureTarget:Feature=event.feature;
+					draw.drawLayer.addFeature(featureTarget);
+
+					draw._drawHandler.mode=DrawHandler.EDIT_MODE;
+					draw.addEventListener("addItem", function():void
+						{
+							(form.getChildByName("the_geom") as TextInput).text=getFeatureData4PostGis(featureTarget);
+						});
+				}
+
+				public function getFeatureData4PostGis(feature:Feature):String
+				{
+					var text2:String="";
+					if (feature as PolygonFeature)
+					{
+						var text:String=((feature as PolygonFeature).polygon.getcomponentsClone()[0] as org.openscales.core.geometry.LinearRing).componentsString;
+
+						var arr:Array=text.split(",");
+
+						for (var i:int=0; i < arr.length; i=i + 2)
+						{
+							text2=text2 + arr[i] + arr[i + 1] + ",";
+						}
+						text2=text2 + arr[0] + arr[1];
+						text2="MULTIPOLYGON(((" + text2 + ")))";
+					}
+					else if (feature as LineStringFeature)
+					{
+						var arrPoint:Array=((feature as LineStringFeature).lineString.getcomponentsClone());
+
+						for (var i:int=0; i < arrPoint.length; i++)
+						{
+							text2=text2 + arrPoint[i].x + " " + arrPoint[i].y + ",";
+						}
+						text2=text2.substr(0, text2.length - 1);
+						text2="MULTILINESTRING((" + text2 + "))";
+					}
+					else if (feature as PointFeature)
+					{
+						text2="POINT(" + (feature as PointFeature).point.x+" "+ (feature as PointFeature).point.y + ")";
+					}					
+					return text2;
+				}
+			]]>
+		</mx:Script>
+
+	</mx:Canvas>
+</mx:Application>

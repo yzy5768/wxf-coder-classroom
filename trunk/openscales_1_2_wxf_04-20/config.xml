@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vistech>
+	<database>
+		<SL323>
+			<server>127.0.0.1</server>
+			<username>sa</username>
+			<password>sa</password>
+			<dbname>RWDBNN</dbname>
+		</SL323>
+	</database>
+	<pgdatabase>
+		<SL323>
+			<server>localhost</server>
+			<username>postgres</username>
+			<password>postgres</password>
+			<dbname>nnfx4</dbname>
+		</SL323>
+	</pgdatabase>	
+	
+	<!--后台通信地址,前台调用后台的数据都是通过app.php来实现的,
+	  * 以controller 和 action 两个参数
+	  * app.php 可以调用其他的后台文件
+	  -->
+	<appURL>app.php</appURL>
+	
+	<!--配置地图参数
+	  * gwc服务的网络地址,这个地址既可以是内网也可以是外网访问
+	  * gwc服务所要调用的图层名称
+	  * 整个地图在初始化时所用的地图中心
+	  -->
+	<map>
+		<gwc>http://172.16.51.54:8080/geoserver/gwc/service/wms</gwc>
+		<gwcLayer>nnfx</gwcLayer>
+		<resolutions>0.010986328125, 0.0054931640625, 0.00274658203125, 0.001373291015625, 6.866455078125E-4, 3.4332275390625E-4, 1.71661376953125E-4, 8.58306884765625E-5, 4.291534423828125E-5, 2.1457672119140625E-5,1.0728836059570312E-5, 5.364418029785156E-6</resolutions>
+		<center lon='108.26917' lat='22.82535' />
+	</map>
+	
+	<!--系统左侧菜单入口配置
+	  * 系统的模块划分可以通过菜单项看出来
+	  -->
+	<menuData>
+		<menuItem value="水利工程分布">
+			<menuItem value="水库" ></menuItem>
+			<menuItem value="河流" ></menuItem>
+			<menuItem value="堤防" ></menuItem>
+			<menuItem value="穿堤建筑物" ></menuItem>
+			<menuItem value="遥测站" ></menuItem>
+			<menuItem value="视屏站" ></menuItem>
+			<menuItem value="桥梁" ></menuItem>
+		</menuItem>
+		<menuItem value="实时汛情">
+			<menuItem value="水库水位" ></menuItem>
+			<menuItem value="河道水位" ></menuItem>
+		</menuItem>		
+		<menuItem value="实时气象">
+			<menuItem value="降雨分布" ></menuItem>
+			<menuItem value="风情分布" ></menuItem>
+			<menuItem value="温度分布" ></menuItem>
+			<menuItem value="气象云图" ></menuItem>
+			<menuItem value="台风路径" ></menuItem>
+		</menuItem>	
+		<menuItem value="城市排涝">
+			<menuItem value="等高线" ></menuItem>
+			<menuItem value="排涝模拟" ></menuItem>
+		</menuItem>	
+		<menuItem value="洪水预报">
+			<menuItem value="数据输入" ></menuItem>
+			<menuItem value="预报测试" ></menuItem>
+		</menuItem>					
+		<menuItem value="系统管理">
+			<menuItem value="个人用户" ></menuItem>
+			<menuItem value="用户管理" ></menuItem>
+			<menuItem value="网路通信监视" ></menuItem>
+		</menuItem>					
+	</menuData>
+</vistech>

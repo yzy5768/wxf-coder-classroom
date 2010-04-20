@@ -1,0 +1,98 @@
+
+
+SuperPanel
+{
+    resize-grip-skin:              Embed(source="assets/images/resizeHandler.png");
+    
+    /*
+    actionAlpha:                 0.75;
+    border-color:                 #ffffff;
+    border-alpha:                 1;
+    border-thickness-left:         0;
+    border-thickness-top:         0;
+    border-thickness-bottom:    9;
+    border-thickness-right:     0;
+    corner-radius:                 6;
+    highlight-alphas:             0.1, 0;
+    header-colors:                 #efefef, #aaaaaa;
+    footer-colors:                 #ffffff, #ffffff;
+    dropShadowEnabled:             true;
+    shadow-distance:            4;
+    
+   */
+   
+    header-colors:                 #efefef, #aaaaaa;
+    close-button-style-name:    "closeButton";
+    minimize-button-style-name:    "minimizeButton";
+    maximize-button-style-name:    "maximizeButton";
+    
+    /*
+    inactive-header-colors:     #999999, #666666;
+    inactive-footer-colors:     #ffffff, #ffffff;
+    inactive-shadow-distance:    1;
+    */
+}
+
+.closeButton
+{
+    icon:                         Embed(source="assets/images/icon_close_up.png");
+    up-icon:                     Embed(source="assets/images/icon_close_up.png");
+    over-icon:                     Embed(source="assets/images/icon_close_over.png");
+    down-icon:                     Embed(source="assets/images/icon_close_down.png");
+    disabled-skin:                 Embed(source="assets/images/clear.png");
+    selected-up-skin:             Embed(source="assets/images/clear.png");
+    selected-over-skin:         Embed(source="assets/images/clear.png");
+    selected-down-skin:         Embed(source="assets/images/clear.png");
+    down-skin:                     Embed(source="assets/images/clear.png");
+    over-skin:                     Embed(source="assets/images/clear.png");
+    up-skin:                     Embed(source="assets/images/clear.png");    
+}
+
+.maximizeButton
+{
+    icon:                         Embed(source="assets/images/icon_expand_up.png");
+    up-icon:                     Embed(source="assets/images/icon_expand_up.png");
+    over-icon:                     Embed(source="assets/images/icon_expand_over.png");
+    selected-over-icon:         Embed(source="assets/images/icon_expand_over.png");
+    down-icon:                     Embed(source="assets/images/icon_expand_down.png");
+    selected-down-icon:         Embed(source="assets/images/icon_expand_down.png");
+    disabled-skin:                 Embed(source="assets/images/clear.png");
+    selected-up-skin:             Embed(source="assets/images/clear.png");
+    selected-over-skin:         Embed(source="assets/images/clear.png");
+    selected-down-skin:         Embed(source="assets/images/clear.png");
+    down-skin:                     Embed(source="assets/images/clear.png");
+    over-skin:                     Embed(source="assets/images/clear.png");
+    up-skin:                     Embed(source="assets/images/clear.png");    
+}
+
+.minimizeButton
+{
+    icon:                         Embed(source="assets/images/icon_minimize_up.png");
+    up-icon:                     Embed(source="assets/images/icon_minimize_up.png");
+    over-icon:                     Embed(source="assets/images/icon_minimize_over.png");
+    selected-over-icon:         Embed(source="assets/images/icon_minimize_over.png");
+    down-icon:                     Embed(source="assets/images/icon_minimize_down.png");
+    selected-down-icon:         Embed(source="assets/images/icon_minimize_down.png");
+    disabled-skin:                 Embed(source="assets/images/clear.png");
+    selected-up-skin:             Embed(source="assets/images/clear.png");
+    selected-over-skin:         Embed(source="assets/images/clear.png");
+    selected-down-skin:         Embed(source="assets/images/clear.png");
+    down-skin:                     Embed(source="assets/images/clear.png");
+    over-skin:                     Embed(source="assets/images/clear.png");
+    up-skin:                     Embed(source="assets/images/clear.png");
+}
+
+
+menuItemActive
+{
+	background-color: #00ff00;
+	color: #FF3333;
+	font-size: 14;
+}
+
+menuItem
+{
+	background-color: #FFFFFF;
+	color: #000000;
+	font-size: 12;
+}

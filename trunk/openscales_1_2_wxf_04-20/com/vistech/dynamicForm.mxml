@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 南宁防汛应急决策支持指挥系统,前台核心文件
+	 * 这个是一个只有 textInput 元素的前台输入框,默认是没有任何前台元素的  TODO 这个需要改进
+	 * 前台不判断数据输入的合法性
+	 * 这里要先跟后台交互,从后台得到前台所需要显示的列,然后将这些列自动排列
+	 *
+	 * 如何使用这个文件：
+	 * 1 要新建一个后台文件,比如 server.php ,这个文件可以返回一个XML格式的数据,格式必须是:
+	 * <?xml?>
+	 * <columns>
+	 *  <column id='foo' label='列名' type='text' />
+	 *  <column id='bar' label='列名2' type='text' />
+	 * </columns>
+	 * 其中的 lable 可以有重复,但是id不能有重复,前台会根据  type 的格式自动调整输入框的类型
+	 * 2 readColumnsFromServer(urlPath) 函数从后台读取这个server.php 文件,将xml文件处理为一个arrayCollection
+	 * 3 setForm(formElements) 将上一个函数所产生的数组处理,填充前台元素
+	 *
+	 * 前台还有2个按钮,一个是 保存 , 一个是删除 .分别对应函数 saveFormValue(urlPath) 函数 和 deleteFormValue(urlPath) 函数,
+	 * 也需要向后台通信,这2个函数都会读取表单中的元素,并将所有元素内容都 POST 到后台.
+	 * 一般而言,后台在处理 保存时,也要判断是否需要执行 新建,当然,这个是后台PHP文件的工作
+	 *
+	 * 默认的,删除和保存按钮是不可见的,即用户无法操作.但这个也需要向后台通信,来判断当前用户是否具有某个权限
+	 * 如果后台确认当前用户可以操作,则将按钮显示为可见
+	 * 通过 setOperation(operationid)函数来实现
+	 *
+	 * @copyright www.vistech.com.cn 杭州旅行者科技有限公司
+	 * @author wxf.livemate@gmail.com
+	 * @version 2010-03-07
+	 * @see http://58.59.136.84 南宁防汛项目系统
+-->
+<FlowContainer xmlns="flexlib.containers.*"
+			   xmlns:mx="http://www.adobe.com/2006/mxml"
+			   width="100%"
+			   height="100%">
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.rpc.http.mxml.HTTPService;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.controls.TextInput;
+			import mx.controls.Label;
+			import mx.collections.ArrayCollection;
+
+			public var urlPathSave:String="";
+			public var urlPathDelete:String="";
+			public var urlPathRead:String="";
+
+			/**
+			 * 设置表单内容
+			 *
+			 * @param formElements 一个包含了表单元素的数组,数组长度必须大于1
+			 *						每个数组元素都是一个object,这个object必须含有2个属性
+			 *						id和label,其中,id不可以是 save或者delete
+			 * */
+			public function setForm(formElements:ArrayCollection):void
+			{
+				for (var i:int=4; i < getChildren().length; i++)
+				{
+					removeChildAt(i);
+				}
+				for (var i:int=formElements.length - 1; i >= 0; i--)
+				{
+					var label:Label=new Label();
+					label.text=(formElements[i] as Object).label;
+					label.width=80;
+					addChildAt(label, 0);
+					var textInput:TextInput=new TextInput();
+					textInput.name=(formElements[i] as Object).id;
+					textInput.width=110;
+					addChildAt(textInput, 1);
+				}
+			}
+
+			/**
+			 * 从后台读取权限,判断目前用户是否有某种操作.如果可以,则设置按钮的可见性
+			 * 主要是 删除按钮 和 保存按钮
+			 * 其中保存按钮即可以实现 新建,也可以实现修改
+			 * */
+			public function setAccess(accessName:String, urlPath:String):void
+			{
+//				var httpservice:HTTPService=new HTTPService();
+//				httpservice.url=urlPath;
+//				httpservice.addEventListener(ResultEvent.RESULT, function(event:ResultEvent):void
+//					{
+//						if (event.result.toString() == "true")
+//						{
+							if (accessName == "save")
+							{
+								save.visible=true;
+								save.height=20;
+								
+								dispatchEvent( new Event( "accessReadCompleted" ) );
+							}
+							if (accessName == "remove")
+							{
+								remove.visible=true;
+								remove.height=20;
+							}
+//							
+//							
+//						}
+//					});
+//				httpservice.addEventListener(FaultEvent.FAULT, function(event:FaultEvent):void
+//					{
+//						Alert.show("无法读取数据\n" + urlPath + "无法连接");
+//					});
+//				httpservice.request={accessName: accessName};
+//				httpservice.method="POST";
+//				httpservice.send();
+			}
+
+			/**
+			 * 获得这个表单的值
+			 * @return result 一个哈希表
+			 * */
+			public function getFormValue():Dictionary
+			{
+				var result:Dictionary=new Dictionary();
+				for (var i:int=1; i < getChildren().length - 4; i+=2)
+				{
+					if (getChildAt(i) as TextInput)
+					{
+						result[(getChildAt(i) as TextInput).name]=(getChildAt(i) as TextInput).text;
+					}
+				}
+				return result;
+			}
+
+			/**
+			 * 保存一条数据
+			 * 主要是将前台表单中的所有内容都POST到后台,由后台处理数据库操作
+			 * 前台则直接输出返回结果
+			 * */
+			public function saveToServer():void
+			{
+				var data:Dictionary=this.getFormValue();
+				var httpservice:HTTPService=new HTTPService();
+				httpservice.url=urlPathSave;
+				httpservice.addEventListener(ResultEvent.RESULT, function(event:ResultEvent):void
+					{
+						Alert.show(event.result.toString());
+					});
+				httpservice.addEventListener(FaultEvent.FAULT, function(event:FaultEvent):void
+					{
+						Alert.show("无法读取数据\n" + urlPathSave + "无法连接");
+					});
+				httpservice.request=data as Object;
+				httpservice.method="POST";
+				httpservice.send();
+			}
+
+			/**
+			 * 设置表单数据
+			 * 表单的元素是通过setForm实现的
+			 * */
+			public function setFormValue(data:Dictionary):void
+			{
+				for (var key:String in data)
+				{
+					(getChildByName(key) as TextInput).text=data[key];
+				}
+			}
+
+			/**
+			 * 从后台读取数据并显示到表单
+			 *
+			 * 规定: action=read 只返回一条记录
+			 * */
+			public function readFromServer(id:String):void
+			{
+				var data:Dictionary=new Dictionary();
+				var httpservice:HTTPService=new HTTPService();
+				httpservice.url=urlPathRead;
+				httpservice.addEventListener(ResultEvent.RESULT, function(event:ResultEvent):void
+					{
+						setForm(event.result.table.columns.column);
+
+						if (event.result.table.data)
+						{
+							for (var key:String in(event.result.table.data.valueOf()))
+							{
+								data[key]=event.result.table.data[key];
+							}
+							setFormValue(data);
+							
+							//dispatchEvent( new Event( "dataReadCompleted" ) );
+						}
+						else
+						{
+							Alert.show("数据格式错误\n" + event.result.toString());
+						}
+					});
+				httpservice.addEventListener(FaultEvent.FAULT, function(event:FaultEvent):void
+					{
+						Alert.show("无法读取数据\n" + urlPathRead + "无法连接");
+					});
+				httpservice.request={id: id};
+				httpservice.method="POST";
+				httpservice.send();
+			}
+
+			private function onClickDelete():void
+			{
+				var id:String=(getChildAt(1) as TextInput).text;
+				var httpservice:HTTPService=new HTTPService();
+				httpservice.url=urlPathDelete;
+				httpservice.addEventListener(ResultEvent.RESULT, function(event:ResultEvent):void
+					{
+						Alert.show(event.result.toString());
+						dispatchEvent( new Event( "dataDeleted" ) );
+					});
+				httpservice.addEventListener(FaultEvent.FAULT, function(event:FaultEvent):void
+					{
+						Alert.show("无法读取数据\n" + urlPathDelete + "无法连接");
+					});
+				httpservice.request={id: id};
+				httpservice.method="POST";
+				httpservice.send();				
+			}
+
+			public function onClickRead()
+			{
+				var id:String=(getChildAt(0) as TextInput).text;
+				readFromServer(id);
+			}
+		]]>
+	</mx:Script>
+	<mx:Label width="{width}"
+			  height="5"/>
+	<mx:Button id="save"
+			   visible="false"
+			   height="0"
+			   label="保存"
+			   width="100"
+			   click="saveToServer()"/>
+	<mx:Button id="remove"
+			   visible="false"
+			   height="0"
+			   label="删除"
+			   width="100"
+			   click="onClickDelete()"/>
+	<mx:Button id="read"
+			   visible="false"
+			   height="0"
+			   label="读取"
+			   width="100"
+			   click="onClickRead()"/>
+	<mx:Metadata>
+        [Event(name="dataReadCompleted", type="flash.events.Event")]
+        [Event(name="accessReadCompleted", type="flash.events.Event")]
+        [Event(name="dataDeleted", type="flash.events.Event")]
+    </mx:Metadata>
+</FlowContainer>
