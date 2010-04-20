@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+	 这个控件提供了对数据库表 vt_projects_river 内单条数据的修改界面,
+	 包括修改和新建
+	 vt_projects_river是测站基本属性表奥,其他遥测站如 河道水文站 水库水文站 气象站 都与这张表做一一映射
+	 这个控件一般要和其他的页面修改控件结合起来,比如说被放置在一个 TAB 页面中
+	 这个功能预计要与 GOOGLE MAP 结合
+	 @Copyright www.vistech.com.cn
+	 @author wxf
+	 @version 2010-01-19
+	 @see config.xml,提供后台的路径
+	 @see SL323—2005,ICS 35.040,L 71,实时雨水情数据库表结构与标识符标准,介绍 vt_projects_river 的由来
+	 @see app.php,默认的后台路径,唯一的,可以通过 controller action 等参数调用各种功能,大多数返回的数据是 XML 格式
+-->
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+		   width="100%"
+		   height="100%"
+		   xmlns:vistech="com.vistech.*"
+		   xmlns:flexlib="http://code.google.com/p/flexlib/">
+	<mx:Script>
+		<![CDATA[
+			import org.openscales.core.layer.FeatureLayer;
+			import mx.effects.Glow;
+			import org.openscales.core.basetypes.LonLat;
+			import org.openscales.core.Map;
+			import mx.events.ListEvent;
+			import mx.events.FlexEvent;
+			import mx.controls.CheckBox;
+			import mx.controls.NumericStepper;
+			import mx.controls.Label;
+			import mx.effects.Fade;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import mx.controls.DataGrid;
+			import mx.events.CloseEvent;
+			import com.vistech.SuperPanel;
+			import mx.core.Application;
+			import mx.controls.DateField;
+			import mx.messaging.AbstractConsumer;
+			import mx.controls.ComboBox;
+			import mx.collections.ArrayCollection;
+			import mx.rpc.events.FaultEvent;
+			import mx.controls.Alert;
+			import mx.controls.TextInput;
+			import mx.rpc.AsyncToken;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.http.HTTPService;
+			import flexlib.containers.FlowContainer;
+
+			//默认的后台文件路径,可以通过 app.php?controller=c1&action=a2调用不同数据
+			public var appURL:String="app.php";
+
+			public var event:ResultEvent=null;
+
+			//查询条件
+			public var searchConditions:Object=null;
+
+			public var map:Map=null;
+
+
+			public var alertGlow:Glow;
+			private var myTimer:Timer=new Timer(800, 5);
+			public var _obj:Object=new Object();
+
+
+			public function glow():void
+			{
+				myTimer.removeEventListener(TimerEvent.TIMER, timerEventHandler);
+				myTimer.start();
+				myTimer.addEventListener(TimerEvent.TIMER, timerEventHandler);
+			}
+
+			private function timerEventHandler(event:TimerEvent):void
+			{
+				alertGlow=new Glow;
+				alertGlow.target=_obj;
+				alertGlow.blurXFrom=1;
+				alertGlow.blurXTo=30;
+				alertGlow.blurYFrom=1;
+				alertGlow.blurYTo=30;
+				alertGlow.color=0xff0000;
+				alertGlow.duration=800;
+				alertGlow.alphaFrom=1;
+				alertGlow.strength=25;
+				alertGlow.alphaTo=0;
+				alertGlow.play();
+			}
+
+
+			/**
+			 * 从后台读取数据并显示到表单
+			 *
+			 * 规定: action=read 只返回一条记录
+			 * */
+			public function readGridValue():void
+			{
+				searchBut.label="查询中...";
+				searchBut.enabled=false;
+				var httpservice:HTTPService=new HTTPService();
+				httpservice.url=appURL + "?controller=vt_projects_river&action=readKml";
+				httpservice.addEventListener(ResultEvent.RESULT, getHttpData);
+				httpservice.addEventListener(FaultEvent.FAULT, function(event:FaultEvent):void
+					{
+						Alert.show("无法连接到服务器");
+						searchBut.label="查询";
+						searchBut.enabled=true;
+					});
+				var requestObject:Object=new Object();
+				if (this.searchConditions != null)
+					requestObject=this.searchConditions;
+				httpservice.request=requestObject;
+				httpservice.method="POST";
+				httpservice.send();
+			}
+
+			/**
+			 * 获得服务器传递的数据后执行
+			 * 将表格内容填充,将分页数据填充
+			 *
+			 * @param event 与 httpService 配套的,当通信结束之后发生
+			 * */
+			public function getHttpData(event:ResultEvent):void
+			{
+				//设置表格的列和数据源
+				if (!event.result.kml.Document || !event.result.kml.Document.Placemark || (event.result.kml.Document.Placemark as ArrayCollection).length==2)
+				{
+					grid.dataProvider=null;
+					Alert.show(event.result.kml.Document.Placemark.length);
+					Alert.show("无数据");
+				}
+				else
+				{
+					//var xml:XML
+					var data:ArrayCollection = event.result.kml.Document.Placemark;					
+					data.removeItemAt(0);
+					data.removeItemAt(0);					
+					grid.dataProvider=event.result.kml.Document.Placemark;	
+					grid.addEventListener(ListEvent.ITEM_CLICK, function(event:ListEvent):void
+						{
+							map.setCenter(new LonLat(event.itemRenderer.data.LookAt.longitude as Number, event.itemRenderer.data.LookAt.latitude as Number));
+							_obj= (map.getLayerByName("vt_projects_river") as FeatureLayer).features[event.rowIndex];
+							glow();
+						});
+
+					total.text="总计" + data.length + "条数据";		
+					this.event=event;		
+					dispatchEvent(new Event("searchComplete"));
+				}
+				searchBut.label="查询";
+				searchBut.enabled=true;
+			}
+
+			private function search():void
+			{
+				if (map.getLayerByName("vt_projects_river"))
+					this.map.removeLayer(map.getLayerByName("vt_projects_river"));
+				grid.dataProvider=null;
+				this.searchConditions=new Object();
+				if (!RIV_NAME.text == "")
+				{
+					this.searchConditions.RIV_NAME=RIV_NAME.text;
+				}
+
+				this.readGridValue();
+
+			}
+		]]>
+	</mx:Script>
+	<mx:Label text="名称:"
+			  left="10"
+			  top="12"/>
+	<mx:TextInput id="RIV_NAME"
+				  left="48"
+				  top="10"/>
+	<mx:Label text="总共5条数据"
+			  id="total" top="100" left="100" width="108"/>
+	<mx:Button label="查询"
+			   id="searchBut"
+			   top="98"
+			   left="10"
+			   width="82"
+			   click="search();"/>
+	<mx:DataGrid width="100%"
+				 bottom="20"
+				 top="128"
+				 id="grid">
+		<mx:columns>
+			<mx:DataGridColumn dataField="id"
+							   headerText="编码"/>
+			<mx:DataGridColumn dataField="name"
+							   headerText="名称"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<!--为按钮添加事件,使得按钮可以被外部监听-->
+	<mx:Metadata>
+        [Event(name="searchComplete", type="flash.events.Event")]
+    </mx:Metadata>
+</mx:Canvas>
